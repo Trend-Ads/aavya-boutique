@@ -29,18 +29,39 @@ export default function Header() {
         id="site-header"
         style={{
           position: "fixed",
-          top: 34,
+          top: scrolled ? "12px" : "34px",
           left: 0,
           right: 0,
           zIndex: 50,
-          transition: "background-color 0.35s ease, backdrop-filter 0.35s ease, box-shadow 0.35s ease",
-          backgroundColor: scrolled ? "rgba(248, 245, 240, 0.92)" : "transparent",
-          backdropFilter: scrolled ? "blur(12px)" : "none",
-          WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
-          borderBottom: scrolled ? "1px solid rgba(195, 185, 175, 0.3)" : "1px solid transparent",
+          display: "flex",
+          justifyContent: "center",
+          padding: scrolled ? "0 1rem" : "0",
+          transition: "top 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), padding 0.4s",
+          pointerEvents: "none",
         }}
       >
-        <div className="container-brand">
+        <div
+          style={{
+            width: "100%",
+            maxWidth: scrolled ? "1200px" : "100%",
+            backgroundColor: scrolled ? "rgba(248, 245, 240, 0.95)" : "transparent",
+            backdropFilter: scrolled ? "blur(16px)" : "none",
+            WebkitBackdropFilter: scrolled ? "blur(16px)" : "none",
+            borderRadius: scrolled ? "16px" : "0px",
+            boxShadow: scrolled ? "0 8px 32px rgba(23, 23, 23, 0.08), 0 1px 2px rgba(23, 23, 23, 0.04)" : "none",
+            border: scrolled ? "1px solid rgba(195, 185, 175, 0.3)" : "1px solid transparent",
+            transition: "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+            pointerEvents: "auto",
+          }}
+        >
+          <div
+            className="container-brand"
+            style={{
+              paddingLeft: scrolled ? "1.5rem" : undefined,
+              paddingRight: scrolled ? "1.5rem" : undefined,
+              transition: "padding 0.4s",
+            }}
+          >
           <div
             style={{
               display: "flex",
@@ -288,6 +309,7 @@ export default function Header() {
                   </span>
                 )}
               </button>
+            </div>
             </div>
           </div>
         </div>
