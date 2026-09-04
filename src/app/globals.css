@@ -62,16 +62,37 @@ img {
 }
 
 /* ─── Scrollbar Styling ───────────────────────────────────────── */
+/* Desktop: Blend the scrollbar with the theme (transparent track) */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-ivory);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-taupe-light);
-  border-radius: 2px;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-taupe);
+}
+
+/* Firefox scrollbar blending */
+html, body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-taupe-light) transparent;
+}
+
+/* Mobile: Hide scrollbars completely */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 /* Hide scrollbar for horizontal carousels */

@@ -47,7 +47,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}
     >
       {/* Image Container */}
-      <div className="product-image-wrap" style={{ position: "relative" }}>
+      <div className="product-image-wrap" style={{ position: "relative", overflow: "hidden" }}>
         <img
           src={product.image}
           alt={`${product.name} — Aavya Boutique`}

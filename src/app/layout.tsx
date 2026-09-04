@@ -58,7 +58,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${cormorant.variable} ${inter.variable}`}
     >
       <body style={{ backgroundColor: "var(--color-ivory)", color: "var(--color-charcoal)", overflowX: "hidden" }}>
-        <Providers>{children}</Providers>
+        <div style={{ overflowX: "hidden", width: "100%", position: "relative" }}>
+          <Providers>{children}</Providers>
+        </div>
       </body>
     </html>
   );

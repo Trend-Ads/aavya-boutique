@@ -45,7 +45,7 @@ export default function HeroSection() {
         <picture>
           <source media="(min-width: 768px)" srcSet="/landing/hero-main.png" />
           <img
-            src="/images/hero.jpg"
+            src="/landing/hero-mobile.png"
             alt="Woman in elegant cream kurta dress — Aavya Boutique New Edit"
             style={{
               width: "100%",
