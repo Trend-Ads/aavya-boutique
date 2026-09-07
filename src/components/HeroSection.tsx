@@ -50,9 +50,9 @@ export default function HeroSection() {
 
       {/* ─── 2. Main Content Wrapper ─── */}
       <div
+        className="hero-content-wrapper"
         style={{
           position: "relative",
-          zIndex: 10,
           width: "100%",
           height: "100%",
           flex: 1,
@@ -88,7 +88,7 @@ export default function HeroSection() {
 
             {/* Right Editorial Paragraph matching screenshot */}
             <div
-              className="animate-slide-up-delay-1"
+              className="animate-slide-up-delay-1 hero-editorial-blurb"
               style={{
                 maxWidth: "380px",
                 marginLeft: "auto",
@@ -132,7 +132,7 @@ export default function HeroSection() {
           {/* Left giant word: "ELITE" */}
           <div
             aria-hidden="true"
-            className="animate-slide-up-delay-2"
+            className="animate-slide-up-delay-2 hero-typography-left"
             style={{
               position: "absolute",
               top: "35%",
@@ -163,7 +163,7 @@ export default function HeroSection() {
           {/* Right giant word: "STYLE" */}
           <div
             aria-hidden="true"
-            className="animate-slide-up-delay-2"
+            className="animate-slide-up-delay-2 hero-typography-right"
             style={{
               position: "absolute",
               bottom: "23%",
@@ -239,6 +239,7 @@ export default function HeroSection() {
             <a
               href="#new-arrivals"
               id="hero-shop-now-cta"
+              className="hero-cta-btn"
               style={{
                 display: "inline-flex",
                 alignItems: "center",

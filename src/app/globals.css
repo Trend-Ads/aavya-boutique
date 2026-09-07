@@ -570,6 +570,7 @@ html, body {
     min-height: 400px !important;
     max-height: calc(100% - 15px) !important;
     bottom: -18px !important;
+    z-index: 10 !important;
   }
   .hero-model-wrap img {
     height: 100% !important;
@@ -580,11 +581,33 @@ html, body {
   #hero-ribbon {
     bottom: 0 !important;
     height: 38px;
+    z-index: 20 !important;
+  }
+  /* Make ELITE and STYLE on the top of the PNG image on mobile */
+  .hero-typography-left {
+    top: 28% !important;
+    left: clamp(0.5rem, 3vw, 2rem) !important;
+    z-index: 28 !important;
+  }
+  .hero-typography-right {
+    top: 36% !important;
+    bottom: auto !important;
+    right: clamp(0.5rem, 3vw, 2rem) !important;
+    z-index: 28 !important;
+  }
+  .hero-editorial-blurb {
+    position: relative;
+    z-index: 30 !important;
   }
   .hero-left-content {
     position: relative;
-    z-index: 30 !important;
+    z-index: 35 !important;
     margin-bottom: 2.8rem !important;
+  }
+  .hero-cta-btn {
+    position: relative;
+    z-index: 40 !important;
+    pointer-events: auto !important;
   }
 }
 
