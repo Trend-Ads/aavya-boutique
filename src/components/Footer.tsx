@@ -22,7 +22,7 @@ const HELP_LINKS = [
 const ABOUT_LINKS = [
   { label: "Our Story", href: "#about" },
   { label: "Instagram", href: "https://www.instagram.com/aavyaboutique.in" },
-  { label: "WhatsApp", href: "https://wa.me/919000000000" },
+  { label: "WhatsApp", href: "https://wa.me/918594031993" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -124,7 +124,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a
-                href="https://wa.me/919000000000"
+                href="https://wa.me/918594031993"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
@@ -176,10 +176,12 @@ export default function Footer() {
               India
               <br />
               <br />
+              +91 85940 31993
+              <br />
               All India Delivery
             </p>
             <a
-              href="https://wa.me/919000000000"
+              href="https://wa.me/918594031993"
               target="_blank"
               rel="noopener noreferrer"
               id="footer-whatsapp"
