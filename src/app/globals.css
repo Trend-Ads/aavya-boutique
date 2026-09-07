@@ -113,6 +113,17 @@ html, body {
   font-family: var(--font-sans);
 }
 
+.text-stroke-white {
+  color: transparent !important;
+  -webkit-text-stroke: 2.5px #FFFFFF;
+}
+
+@media (max-width: 768px) {
+  .text-stroke-white {
+    -webkit-text-stroke: 1.5px #FFFFFF;
+  }
+}
+
 /* ─── Keyframe Animations ─────────────────────────────────────── */
 @keyframes marquee {
   0%   { transform: translateX(0); }
@@ -482,5 +493,99 @@ html, body {
 }
 
 /* Utility hidden classes */
-.hidden { display: none !important; }
+.hidden { display: none; }
+
+@media (min-width: 640px) {
+  .sm\:flex { display: flex !important; }
+  .sm\:hidden { display: none !important; }
+}
+
+@media (min-width: 768px) {
+  .md\:flex { display: flex !important; }
+  .md\:block { display: block !important; }
+  .md\:hidden { display: none !important; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:flex { display: flex !important; }
+  .lg\:block { display: block !important; }
+  .lg\:hidden { display: none !important; }
+}
+
+/* ─── Hero Section Responsive Layout ─────────────────────────── */
+.hero-section {
+  height: calc(100svh - 36px);
+  min-height: 560px;
+  max-height: 980px;
+}
+
+.hero-model-wrap {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: clamp(520px, 82vh, 850px);
+  max-height: calc(100% - 10px);
+  width: auto;
+  z-index: 12;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.hero-model-wrap img {
+  height: 100%;
+  width: auto;
+  max-width: none;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 15px 35px rgba(180, 100, 120, 0.25));
+}
+
+#hero-ribbon {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  transform: none;
+  height: 42px;
+  background: linear-gradient(90deg, #e05e81 0%, #eb6f92 50%, #e05e81 100%);
+  box-shadow: 0 -2px 14px rgba(224, 94, 129, 0.25);
+  z-index: 20;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 767px) {
+  .hero-section {
+    height: calc(100svh - 36px - 56px);
+    min-height: 500px;
+    max-height: none;
+  }
+  .hero-model-wrap {
+    height: clamp(400px, 70vh, 560px) !important;
+    min-height: 400px !important;
+    max-height: calc(100% - 15px) !important;
+    bottom: -18px !important;
+  }
+  .hero-model-wrap img {
+    height: 100% !important;
+    width: auto !important;
+    transform: scale(1.04);
+    transform-origin: center bottom;
+  }
+  #hero-ribbon {
+    bottom: 0 !important;
+    height: 38px;
+  }
+  .hero-left-content {
+    position: relative;
+    z-index: 30 !important;
+    margin-bottom: 2.8rem !important;
+  }
+}
+
 

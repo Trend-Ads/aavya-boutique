@@ -69,9 +69,6 @@ export default function Home() {
       {/* Footer */}
       <Footer />
 
-      {/* Mobile Bottom Nav (spacer) */}
-      <div className="md:hidden" style={{ height: 68 }} aria-hidden="true" />
-
       {/* Overlays & Drawers */}
       <MobileBottomNav />
       <CartDrawer />

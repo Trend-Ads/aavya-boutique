@@ -5,12 +5,11 @@ import { useUI } from "@/context/UIContext";
 import MobileMenuDrawer from "./MobileMenuDrawer";
 
 const NAV_LINKS = [
-  { label: "New Arrivals", href: "#new-arrivals" },
-  { label: "Women", href: "#shop" },
-  { label: "Collections", href: "#collections" },
-  { label: "Dresses", href: "#dresses" },
-  { label: "Ethnic", href: "#ethnic" },
-  { label: "Sale", href: "#sale" },
+  { label: "Men", href: "#men", hasDropdown: true },
+  { label: "Women", href: "#shop", hasDropdown: true },
+  { label: "Accessories", href: "#accessories", hasDropdown: true },
+  { label: "More", href: "#collections", hasDropdown: true },
+  { label: "On Sale", href: "#sale", isSale: true, hasDropdown: true },
 ];
 
 export default function Header() {
@@ -29,7 +28,7 @@ export default function Header() {
         id="site-header"
         style={{
           position: "fixed",
-          top: scrolled ? "12px" : "34px",
+          top: scrolled ? "12px" : "36px",
           left: 0,
           right: 0,
           zIndex: 50,
@@ -67,7 +66,7 @@ export default function Header() {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              height: "60px",
+              height: "62px",
             }}
           >
             {/* Mobile: Hamburger */}
@@ -94,8 +93,8 @@ export default function Header() {
                   style={{
                     display: "block",
                     width: 22,
-                    height: 1,
-                    backgroundColor: scrolled ? "var(--color-charcoal)" : "var(--color-ivory)",
+                    height: 1.5,
+                    backgroundColor: "var(--color-charcoal)",
                     transition: "background-color 0.3s",
                   }}
                 />
@@ -103,8 +102,8 @@ export default function Header() {
                   style={{
                     display: "block",
                     width: 16,
-                    height: 1,
-                    backgroundColor: scrolled ? "var(--color-charcoal)" : "var(--color-ivory)",
+                    height: 1.5,
+                    backgroundColor: "var(--color-charcoal)",
                     transition: "background-color 0.3s",
                   }}
                 />
@@ -112,35 +111,42 @@ export default function Header() {
                   style={{
                     display: "block",
                     width: 20,
-                    height: 1,
-                    backgroundColor: scrolled ? "var(--color-charcoal)" : "var(--color-ivory)",
+                    height: 1.5,
+                    backgroundColor: "var(--color-charcoal)",
                     transition: "background-color 0.3s",
                   }}
                 />
               </button>
 
               {/* Desktop Nav */}
-              <nav className="hidden md:flex" aria-label="Main navigation" style={{ gap: "2rem" }}>
+              <nav className="hidden md:flex" aria-label="Main navigation" style={{ gap: "1.75rem", alignItems: "center" }}>
                 {NAV_LINKS.map((link) => (
                   <a
                     key={link.label}
                     href={link.href}
                     style={{
                       fontFamily: "var(--font-sans)",
-                      fontSize: "0.72rem",
-                      fontWeight: 500,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: scrolled ? "var(--color-charcoal)" : "var(--color-ivory)",
+                      fontSize: "0.82rem",
+                      fontWeight: link.isSale ? 600 : 500,
+                      letterSpacing: "0.02em",
+                      color: link.isSale ? "#e11d48" : "var(--color-charcoal)",
                       textDecoration: "none",
-                      transition: "color 0.3s, opacity 0.2s",
-                      opacity: 0.85,
+                      transition: "color 0.2s, opacity 0.2s",
+                      opacity: link.isSale ? 1 : 0.9,
                       whiteSpace: "nowrap",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.85")}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = link.isSale ? "1" : "0.9")}
                   >
                     {link.label}
+                    {link.hasDropdown && (
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    )}
                   </a>
                 ))}
               </nav>
@@ -163,12 +169,11 @@ export default function Header() {
                 style={{
                   display: "block",
                   fontFamily: "var(--font-display)",
-                  fontSize: "1.55rem",
-                  fontWeight: 400,
-                  letterSpacing: "0.2em",
+                  fontSize: "1.65rem",
+                  fontWeight: 500,
+                  letterSpacing: "0.22em",
                   textTransform: "uppercase",
-                  color: scrolled ? "var(--color-charcoal)" : "var(--color-ivory)",
-                  transition: "color 0.3s",
+                  color: "var(--color-charcoal)",
                   lineHeight: 1,
                 }}
               >
@@ -179,11 +184,10 @@ export default function Header() {
                   display: "block",
                   fontFamily: "var(--font-sans)",
                   fontSize: "0.52rem",
-                  fontWeight: 400,
+                  fontWeight: 500,
                   letterSpacing: "0.35em",
                   textTransform: "uppercase",
-                  color: scrolled ? "var(--color-taupe)" : "rgba(248,245,240,0.7)",
-                  transition: "color 0.3s",
+                  color: "var(--color-taupe)",
                   marginTop: "3px",
                 }}
               >
@@ -211,8 +215,8 @@ export default function Header() {
                   border: "none",
                   cursor: "pointer",
                   padding: "10px",
-                  color: scrolled ? "var(--color-charcoal)" : "var(--color-ivory)",
-                  transition: "color 0.3s",
+                  color: "var(--color-charcoal)",
+                  transition: "color 0.3s, transform 0.2s",
                   minWidth: 44,
                   minHeight: 44,
                   display: "flex",
@@ -221,6 +225,27 @@ export default function Header() {
                 }}
               >
                 <IconSearch />
+              </button>
+
+              {/* Account */}
+              <button
+                id="account-btn"
+                aria-label="My Account"
+                className="hidden md:flex"
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "10px",
+                  color: "var(--color-charcoal)",
+                  transition: "color 0.3s, transform 0.2s",
+                  minWidth: 44,
+                  minHeight: 44,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <IconUser />
               </button>
 
               {/* Wishlist — desktop only */}
@@ -233,8 +258,8 @@ export default function Header() {
                   border: "none",
                   cursor: "pointer",
                   padding: "10px",
-                  color: scrolled ? "var(--color-charcoal)" : "var(--color-ivory)",
-                  transition: "color 0.3s",
+                  color: "var(--color-charcoal)",
+                  transition: "color 0.3s, transform 0.2s",
                   minWidth: 44,
                   minHeight: 44,
                   alignItems: "center",
@@ -242,27 +267,6 @@ export default function Header() {
                 }}
               >
                 <IconHeart />
-              </button>
-
-              {/* Account — desktop only */}
-              <button
-                id="account-btn"
-                aria-label="My Account"
-                className="hidden md:flex"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "10px",
-                  color: scrolled ? "var(--color-charcoal)" : "var(--color-ivory)",
-                  transition: "color 0.3s",
-                  minWidth: 44,
-                  minHeight: 44,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <IconUser />
               </button>
 
               {/* Cart */}
@@ -275,8 +279,8 @@ export default function Header() {
                   border: "none",
                   cursor: "pointer",
                   padding: "10px",
-                  color: scrolled ? "var(--color-charcoal)" : "var(--color-ivory)",
-                  transition: "color 0.3s",
+                  color: "var(--color-charcoal)",
+                  transition: "color 0.3s, transform 0.2s",
                   minWidth: 44,
                   minHeight: 44,
                   display: "flex",
