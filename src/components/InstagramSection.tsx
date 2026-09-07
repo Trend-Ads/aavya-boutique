@@ -1,12 +1,12 @@
 "use client";
 
 const INSTA_IMAGES = [
-  { id: "ig-1", src: "/images/insta-1.jpg", alt: "Satin midi dress — @aavyaboutique" },
-  { id: "ig-2", src: "/images/insta-2.jpg", alt: "Sage linen co-ord — @aavyaboutique" },
-  { id: "ig-3", src: "/images/insta-3.jpg", alt: "Block print kurta — @aavyaboutique" },
-  { id: "ig-4", src: "/images/insta-4.jpg", alt: "Teal anarkali — @aavyaboutique" },
-  { id: "ig-5", src: "/images/insta-5.jpg", alt: "Off-shoulder linen top — @aavyaboutique" },
-  { id: "ig-6", src: "/images/insta-6.jpg", alt: "Editorial burgundy co-ord — @aavyaboutique" },
+  { id: "ig-1", src: "/images/insta-1.jpg", alt: "Satin midi dress — @aavyaboutique.in" },
+  { id: "ig-2", src: "/images/insta-2.jpg", alt: "Sage linen co-ord — @aavyaboutique.in" },
+  { id: "ig-3", src: "/images/insta-3.jpg", alt: "Block print kurta — @aavyaboutique.in" },
+  { id: "ig-4", src: "/images/insta-4.jpg", alt: "Teal anarkali — @aavyaboutique.in" },
+  { id: "ig-5", src: "/images/insta-5.jpg", alt: "Off-shoulder linen top — @aavyaboutique.in" },
+  { id: "ig-6", src: "/images/insta-6.jpg", alt: "Editorial burgundy co-ord — @aavyaboutique.in" },
 ];
 
 export default function InstagramSection() {
@@ -43,7 +43,7 @@ export default function InstagramSection() {
             Follow the Aavya Edit
           </h2>
           <a
-            href="https://instagram.com/aavyaboutique"
+            href="https://www.instagram.com/aavyaboutique.in"
             target="_blank"
             rel="noopener noreferrer"
             id="instagram-handle"
@@ -58,7 +58,7 @@ export default function InstagramSection() {
             onMouseEnter={(e) => (e.currentTarget.style.color = "var(--color-charcoal)")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "var(--color-taupe)")}
           >
-            @aavyaboutique
+            @aavyaboutique.in
           </a>
         </div>
 
@@ -74,7 +74,7 @@ export default function InstagramSection() {
           {INSTA_IMAGES.map((img) => (
             <a
               key={img.id}
-              href="https://instagram.com/aavyaboutique"
+              href="https://www.instagram.com/aavyaboutique.in"
               target="_blank"
               rel="noopener noreferrer"
               id={img.id}
@@ -141,7 +141,7 @@ export default function InstagramSection() {
         {/* Follow CTA */}
         <div style={{ textAlign: "center", marginTop: "2rem" }}>
           <a
-            href="https://instagram.com/aavyaboutique"
+            href="https://www.instagram.com/aavyaboutique.in"
             target="_blank"
             rel="noopener noreferrer"
             id="instagram-follow-cta"

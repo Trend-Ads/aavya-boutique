@@ -64,7 +64,7 @@ export default function AnnouncementBar() {
           </a>
           {/* Instagram */}
           <a
-            href="https://instagram.com"
+            href="https://www.instagram.com/aavyaboutique.in"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram"

@@ -183,7 +183,7 @@ export default function MobileMenuDrawer({ isOpen }: Props) {
         >
           <div style={{ display: "flex", gap: "1.25rem", marginBottom: "1rem" }}>
             <a
-              href="https://instagram.com/aavyaboutique"
+              href="https://www.instagram.com/aavyaboutique.in"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Follow Aavya Boutique on Instagram"

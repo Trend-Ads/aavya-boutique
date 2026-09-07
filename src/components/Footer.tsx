@@ -21,7 +21,7 @@ const HELP_LINKS = [
 
 const ABOUT_LINKS = [
   { label: "Our Story", href: "#about" },
-  { label: "Instagram", href: "https://instagram.com/aavyaboutique" },
+  { label: "Instagram", href: "https://www.instagram.com/aavyaboutique.in" },
   { label: "WhatsApp", href: "https://wa.me/919000000000" },
   { label: "Contact", href: "#contact" },
 ];
@@ -109,7 +109,7 @@ export default function Footer() {
 
             <div style={{ display: "flex", gap: "1rem" }}>
               <a
-                href="https://instagram.com/aavyaboutique"
+                href="https://www.instagram.com/aavyaboutique.in"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
