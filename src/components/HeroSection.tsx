@@ -73,6 +73,11 @@ export default function HeroSection() {
             paddingBottom: "clamp(4.5rem, 10vh, 6.5rem)",
           }}
         >
+          {/* Semantic SEO H1 */}
+          <h1 className="sr-only">
+            Aavya Boutique — Contemporary Women&apos;s Fashion &amp; Designer Ethnic Wear, Kochi
+          </h1>
+
           {/* Top Row: Left placeholder & Right Editorial Blurb */}
           <div
             style={{
