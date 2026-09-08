@@ -430,7 +430,7 @@ export default async function AdminDashboardPage() {
             Direct WhatsApp
           </div>
           <div style={{ fontSize: "0.8rem", color: "#6b7280", marginTop: "0.35rem" }}>
-            +91 85940 31993
+            +91 97785 24133
           </div>
         </div>
       </div>

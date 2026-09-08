@@ -14,7 +14,7 @@ export async function GET() {
       },
     });
   } catch {
-    return new NextResponse("Aavya Boutique - Modern Women's Fashion, Kochi, Kerala. WhatsApp: +918594031993", {
+    return new NextResponse("Aavya Boutique - Modern Women's Fashion, Kochi, Kerala. WhatsApp: +919778524133", {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   }

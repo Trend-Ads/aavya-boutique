@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useUI } from "@/context/UIContext";
+import { getColorHex, isLightColor } from "@/utils/colors";
+
 
 interface Product {
   id: string;
@@ -260,21 +262,24 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Color Dots */}
           {product.colors.length > 0 && (
             <div style={{ display: "flex", gap: "4px" }} aria-label={`Available in ${product.colors.length} colours`}>
-              {product.colors.slice(0, 4).map((color, i) => (
-                <span
-                  key={i}
-                  title={color}
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    backgroundColor: COLOR_MAP[color] || "#ccc",
-                    border: "1px solid rgba(0,0,0,0.12)",
-                    display: "block",
-                    cursor: "pointer",
-                  }}
-                />
-              ))}
+              {product.colors.slice(0, 4).map((color, i) => {
+                const hex = getColorHex(color);
+                return (
+                  <span
+                    key={i}
+                    title={color}
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      backgroundColor: hex,
+                      border: isLightColor(hex) ? "1px solid rgba(0,0,0,0.25)" : "1px solid rgba(0,0,0,0.12)",
+                      display: "block",
+                      cursor: "pointer",
+                    }}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
@@ -283,20 +288,6 @@ export default function ProductCard({ product }: ProductCardProps) {
   );
 }
 
-const COLOR_MAP: Record<string, string> = {
-  "Dusty Rose": "#B98F8F",
-  "Sage Green": "#8FAE8B",
-  "Cream": "#EFE9E1",
-  "Ivory": "#F8F5F0",
-  "Charcoal": "#2C2C2C",
-  "Terracotta": "#C47B52",
-  "Teal": "#2A7B7B",
-  "Burgundy": "#6F3038",
-  "Lavender": "#B5A8C4",
-  "Navy": "#1C2B4A",
-  "Blush": "#E8C5C5",
-  "Sand": "#C4A882",
-};
 
 /* Add hover show/hide for desktop via CSS injection */
 if (typeof window !== "undefined") {

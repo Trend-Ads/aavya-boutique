@@ -9,29 +9,8 @@ import { createClient } from "@/lib/supabase/client";
 import ConfirmationModal from "./ConfirmationModal";
 import { useToast } from "@/context/ToastContext";
 
-const COLOR_MAP: Record<string, string> = {
-  "Dusty Rose": "#DCAE96",
-  "Sage Green": "#9CAF88",
-  "Cream": "#FFFDD0",
-  "Ivory": "#FFFFF0",
-  "Charcoal": "#2E2E2E",
-  "Terracotta": "#E2725B",
-  "Teal": "#2A7B7B",
-  "Burgundy": "#800020",
-  "Lavender": "#E6E6FA",
-  "Navy": "#000080",
-  "Blush Pink": "#FFD1DC",
-  "Sand": "#C2B280",
-  "Indigo": "#4B0082",
-  "Champagne Gold": "#F7E7CE",
-  "Olive Green": "#708238",
-  "Emerald": "#50C878",
-  "Maroon": "#800000",
-  "Black": "#1A1A1A",
-  "Chanderi Gold": "#D4AF37",
-  "Rust Orange": "#C04000",
-  "Royal Blue": "#4169E1",
-};
+import { getColorHex, isLightColor } from "@/utils/colors";
+
 
 interface AdminProductDetailViewProps {
   product: ProductRecord;
@@ -570,7 +549,8 @@ export default function AdminProductDetailView({ product: initialProduct }: Admi
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}>
                 {product.colors && product.colors.length > 0 ? (
                   product.colors.map((c) => {
-                    const hex = COLOR_MAP[c] || "#999999";
+                    const hex = getColorHex(c);
+                    const isLight = isLightColor(hex);
                     return (
                       <div
                         key={c}
@@ -593,7 +573,8 @@ export default function AdminProductDetailView({ product: initialProduct }: Admi
                             height: "14px",
                             borderRadius: "50%",
                             backgroundColor: hex,
-                            border: "1px solid rgba(0,0,0,0.15)",
+                            border: isLight ? "1.5px solid rgba(0,0,0,0.25)" : "1px solid rgba(0,0,0,0.15)",
+
                           }}
                         />
                         <span>{c}</span>

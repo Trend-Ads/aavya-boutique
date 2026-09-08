@@ -145,7 +145,7 @@ const structuredData = {
       image: `${baseUrl}/hero/hero1.png`,
       description:
         "Aavya Boutique is a premier contemporary women's fashion and ethnic wear boutique based in Kochi, Kerala. Specializing in designer kurtis, handcrafted co-ord sets, dresses, and festive fusion wear with pan-India delivery and direct WhatsApp shopping.",
-      telephone: "+91-8594031993",
+      telephone: "+91-9778524133",
       email: "contact@aavyaboutique.in",
       address: {
         "@type": "PostalAddress",
@@ -175,7 +175,7 @@ const structuredData = {
       ],
       sameAs: [
         "https://www.instagram.com/aavyaboutique.in",
-        "https://wa.me/918594031993",
+        "https://wa.me/919778524133",
       ],
       priceRange: "₹₹",
       currenciesAccepted: "INR",

@@ -208,7 +208,7 @@ export default function MobileMenuDrawer({ isOpen }: Props) {
               Instagram
             </a>
             <a
-              href="https://wa.me/918594031993"
+              href="https://wa.me/919778524133"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat with Aavya Boutique on WhatsApp"

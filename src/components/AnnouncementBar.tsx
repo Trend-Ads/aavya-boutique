@@ -76,7 +76,7 @@ export default function AnnouncementBar() {
           </a>
           {/* WhatsApp */}
           <a
-            href="https://wa.me/918594031993"
+            href="https://wa.me/919778524133"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="WhatsApp"

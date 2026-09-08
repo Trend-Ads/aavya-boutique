@@ -6,20 +6,8 @@ import { ProductItem } from "@/data/products";
 import { useUI } from "@/context/UIContext";
 import ProductCard from "./ProductCard";
 
-const COLOR_MAP: Record<string, string> = {
-  "Dusty Rose": "#B98F8F",
-  "Sage Green": "#8FAE8B",
-  "Cream": "#EFE9E1",
-  "Ivory": "#F8F5F0",
-  "Charcoal": "#2C2C2C",
-  "Terracotta": "#C47B52",
-  "Teal": "#2A7B7B",
-  "Burgundy": "#6F3038",
-  "Lavender": "#B5A8C4",
-  "Navy": "#1C2B4A",
-  "Blush": "#E8C5C5",
-  "Sand": "#C4A882",
-};
+import { getColorHex, isLightColor } from "@/utils/colors";
+
 
 const SIZE_GUIDE_DATA = [
   { size: "XS", bust: '32"', waist: '26"', hips: '36"', length: '46"' },
@@ -110,7 +98,7 @@ export default function ProductDetailView({
       `• *Product Link:* ${currentUrl}\n\n` +
       `Please confirm availability and share payment options for delivery. Thank you!`;
 
-    return `https://wa.me/918594031993?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/919778524133?text=${encodeURIComponent(message)}`;
   }, [product, selectedSize, selectedColor, quantity]);
 
 
@@ -575,38 +563,81 @@ export default function ProductDetailView({
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
                     color: "var(--color-charcoal)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
                   }}
                 >
-                  Colour: <span style={{ fontWeight: 400, color: "var(--color-taupe)" }}>{selectedColor}</span>
+                  <span>Colour:</span>
+                  <span style={{ fontWeight: 600, color: "var(--color-charcoal)" }}>{selectedColor}</span>
+                  {selectedColor && (
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: 14,
+                        height: 14,
+                        borderRadius: "50%",
+                        backgroundColor: getColorHex(selectedColor),
+                        border: isLightColor(getColorHex(selectedColor)) ? "1.5px solid rgba(0,0,0,0.25)" : "1.5px solid rgba(0,0,0,0.1)",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
+                      }}
+                      aria-hidden="true"
+                    />
+                  )}
                 </label>
               </div>
 
-              <div style={{ display: "flex", gap: "0.75rem" }} role="radiogroup" aria-label="Available Colours">
+              <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }} role="radiogroup" aria-label="Available Colours">
                 {product.colors.map((colorName) => {
                   const isSelected = selectedColor === colorName;
-                  const hexCode = COLOR_MAP[colorName] || "#ccc";
+                  const hexCode = getColorHex(colorName);
+                  const isLight = isLightColor(hexCode);
+
                   return (
                     <button
                       key={colorName}
+                      type="button"
                       role="radio"
                       aria-checked={isSelected}
+                      aria-label={`Select colour ${colorName}`}
                       onClick={() => setSelectedColor(colorName)}
                       title={colorName}
                       style={{
                         position: "relative",
-                        width: 32,
-                        height: 32,
+                        width: 34,
+                        height: 34,
                         borderRadius: "50%",
                         backgroundColor: hexCode,
-                        border: "1px solid rgba(0,0,0,0.15)",
+                        border: isLight ? "1.5px solid rgba(0,0,0,0.25)" : "1.5px solid rgba(0,0,0,0.08)",
                         cursor: "pointer",
-                        outline: isSelected ? "2px solid var(--color-charcoal)" : "none",
-                        outlineOffset: "3px",
-                        transition: "transform 0.2s",
+                        boxShadow: isSelected
+                          ? "0 0 0 2px #fff, 0 0 0 4px var(--color-charcoal)"
+                          : "0 2px 4px rgba(0,0,0,0.08)",
+                        transition: "transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 0,
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+                      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.15)")}
                       onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                    />
+                    >
+                      {isSelected && (
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke={isLight ? "#1a1a1a" : "#ffffff"}
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.35))" }}
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
                   );
                 })}
               </div>

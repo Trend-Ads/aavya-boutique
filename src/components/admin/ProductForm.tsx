@@ -16,6 +16,8 @@ import {
   getCategoryContentPreset,
   FabricPreset,
 } from "@/data/productPresets";
+import { getColorHex } from "@/utils/colors";
+
 
 const BADGE_OPTIONS = [
   { value: "", label: "No Badge (Standard)" },
@@ -594,7 +596,7 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
       const match = PRESET_COLORS.find((p) => p.name.toLowerCase() === lower);
       if (match) return match.hex;
       if (/^#[0-9a-f]{3,6}$/i.test(colorName)) return colorName;
-      return "#c5a059"; // elegant gold default
+      return getColorHex(colorName);
     },
     [colorHexMap]
   );

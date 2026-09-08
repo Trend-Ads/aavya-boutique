@@ -12,7 +12,7 @@ export default function CartDrawer() {
   );
 
   const whatsappCheckoutUrl = useMemo(() => {
-    if (cartItems.length === 0) return "https://wa.me/918594031993";
+    if (cartItems.length === 0) return "https://wa.me/919778524133";
 
     const baseUrl =
       typeof window !== "undefined"
@@ -52,7 +52,7 @@ export default function CartDrawer() {
     message += `*Shipping:* Free Shipping across India 📦\n\n`;
     message += `Please confirm my order and share the payment details. Thank you!`;
 
-    return `https://wa.me/918594031993?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/919778524133?text=${encodeURIComponent(message)}`;
   }, [cartItems, subtotal]);
 
   // Close on escape key
