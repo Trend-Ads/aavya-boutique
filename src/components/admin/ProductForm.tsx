@@ -9,6 +9,13 @@ import { Category, DEFAULT_CATEGORIES } from "@/data/categories";
 import ImageCropperModal from "./ImageCropperModal";
 import AdminDropdown from "./AdminDropdown";
 import { useToast } from "@/context/ToastContext";
+import {
+  FABRIC_COMPOSITION_SUGGESTIONS,
+  FIT_SUGGESTIONS,
+  CARE_SUGGESTIONS,
+  getCategoryContentPreset,
+  FabricPreset,
+} from "@/data/productPresets";
 
 const BADGE_OPTIONS = [
   { value: "", label: "No Badge (Standard)" },
@@ -32,39 +39,72 @@ interface ProductFormProps {
 type TabKey =
   | "general"
   | "pricing"
+  | "variants"
   | "descriptions"
   | "fabric"
-  | "shipping"
-  | "variants";
+  | "shipping";
 
 const TABS: { id: TabKey; label: string; icon: string }[] = [
   { id: "general", label: "General & Media", icon: "✨" },
   { id: "pricing", label: "Pricing & Stock", icon: "🏷️" },
+  { id: "variants", label: "Color & Size Variants", icon: "🎨" },
   { id: "descriptions", label: "Story & Highlights", icon: "📝" },
   { id: "fabric", label: "Fabric & Care", icon: "🧵" },
   { id: "shipping", label: "Shipping & Returns", icon: "🚚" },
-  { id: "variants", label: "Color & Size Variants", icon: "🎨" },
 ];
 
-const PRESET_COLORS = [
-  "Dusty Rose",
-  "Ivory",
-  "Charcoal",
-  "Sage Green",
-  "Sand",
-  "Cream",
-  "Indigo",
-  "Terracotta",
-  "Blush Pink",
-  "Champagne Gold",
-  "Mint",
-  "Olive Green",
-  "Emerald",
-  "Navy",
-  "Maroon",
-  "Black",
-  "Burgundy",
+const PRESET_COLORS: { name: string; hex: string }[] = [
+  { name: "Dusty Rose", hex: "#DCAE96" },
+  { name: "Ivory", hex: "#FFFFF0" },
+  { name: "Charcoal", hex: "#2E2E2E" },
+  { name: "Sage Green", hex: "#9CAF88" },
+  { name: "Sand", hex: "#C2B280" },
+  { name: "Cream", hex: "#FFFDD0" },
+  { name: "Indigo", hex: "#4B0082" },
+  { name: "Terracotta", hex: "#E2725B" },
+  { name: "Blush Pink", hex: "#FFD1DC" },
+  { name: "Champagne Gold", hex: "#F7E7CE" },
+  { name: "Mint", hex: "#98FF98" },
+  { name: "Olive Green", hex: "#708238" },
+  { name: "Emerald", hex: "#50C878" },
+  { name: "Navy", hex: "#000080" },
+  { name: "Maroon", hex: "#800000" },
+  { name: "Black", hex: "#1A1A1A" },
+  { name: "Burgundy", hex: "#800020" },
+  { name: "Chanderi Gold", hex: "#D4AF37" },
+  { name: "Powder Blue", hex: "#B0E0E6" },
+  { name: "Wine", hex: "#722F37" },
+  { name: "Coral", hex: "#FF7F50" },
+  { name: "Lavender", hex: "#E6E6FA" },
+  { name: "Rust Orange", hex: "#C04000" },
+  { name: "Royal Blue", hex: "#4169E1" },
 ];
+
+const CATEGORY_PREFIX_MAP: Record<string, string> = {
+  Dresses: "DRS",
+  Kurtis: "KRT",
+  "Kurta Sets": "KUR",
+  "Co-ords": "CRD",
+  "Co-ord Sets": "CRD",
+  Ethnic: "ETH",
+  "Ethnic Wear": "ETH",
+  "Party Wear": "PRT",
+  Festive: "FES",
+  "Festive Wear": "FES",
+  Sarees: "SAR",
+  Anarkalis: "ARK",
+  Lehengas: "LHG",
+  Tunics: "TNC",
+};
+
+const getCategoryCode = (catName: string): string => {
+  if (CATEGORY_PREFIX_MAP[catName]) return CATEGORY_PREFIX_MAP[catName];
+  for (const [key, val] of Object.entries(CATEGORY_PREFIX_MAP)) {
+    if (catName.toLowerCase().includes(key.toLowerCase())) return val;
+  }
+  const clean = catName.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return clean.slice(0, 3).padEnd(3, "X");
+};
 
 const PRESET_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "Free Size"];
 
@@ -187,6 +227,27 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
   const [slugSuggestions, setSlugSuggestions] = useState<string[]>([]);
   const slugDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const autoSaveDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // SKU Real-time Check & Category Count Auto-Allocation
+  const [skuStatus, setSkuStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
+  const [skuFeedback, setSkuFeedback] = useState<string | null>(null);
+  const [skuSuggestions, setSkuSuggestions] = useState<string[]>([]);
+  const [categoryCount, setCategoryCount] = useState<number>(0);
+  const [isAutoSku, setIsAutoSku] = useState<boolean>(!initialProduct?.sku);
+  const skuDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Color Swatches & Free Public Color Search (color.pizza API)
+  const [colorHexMap, setColorHexMap] = useState<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    PRESET_COLORS.forEach((c) => {
+      map[c.name.toLowerCase()] = c.hex;
+    });
+    return map;
+  });
+  const [colorSearchResults, setColorSearchResults] = useState<{ name: string; hex: string }[]>([]);
+  const [isSearchingColor, setIsSearchingColor] = useState(false);
+  const [nativePickerColor, setNativePickerColor] = useState("#c5a059");
+  const colorSearchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // 1. Fetch live categories for dropdown
   useEffect(() => {
@@ -328,6 +389,286 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
       if (slugDebounceRef.current) clearTimeout(slugDebounceRef.current);
     };
   }, [slug, isEdit, initialProduct, supabase]);
+
+  // ============================================================================
+  // SKU AUTO-ALLOCATION AS PER CATEGORY PRODUCT COUNT & LIVE UNIQUENESS CHECK
+  // ============================================================================
+  const autoAllocateSkuForCategory = useCallback(
+    async (targetCategory: string, forceUpdate = false) => {
+      const prefix = getCategoryCode(targetCategory);
+      setSkuStatus("checking");
+      setSkuFeedback("Calculating sequential SKU from category product count...");
+
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, category, sku");
+
+        const allProds = data || [];
+        const catProds = allProds.filter(
+          (p) => p.category?.toLowerCase() === targetCategory.toLowerCase()
+        );
+        const count = catProds.length;
+        setCategoryCount(count);
+
+        const takenSkus = new Set(
+          allProds
+            .map((p) => p.sku?.toUpperCase())
+            .filter((s): s is string => Boolean(s))
+        );
+
+        // Find highest existing numeric suffix for this category
+        let maxNumInCat = 0;
+        catProds.forEach((p) => {
+          const m = p.sku?.match(/(\d+)$/);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            if (!isNaN(num) && num > maxNumInCat) maxNumInCat = num;
+          }
+        });
+
+        // Sequence number based on category count
+        let nextNum = Math.max(count + 1, maxNumInCat + 1);
+        let candidateSku = `AAV-${prefix}-${String(nextNum).padStart(3, "0")}`;
+
+        while (takenSkus.has(candidateSku)) {
+          nextNum++;
+          candidateSku = `AAV-${prefix}-${String(nextNum).padStart(3, "0")}`;
+        }
+
+        if (forceUpdate || !isEdit || !sku.trim()) {
+          setSku(candidateSku);
+          setIsAutoSku(true);
+        }
+
+        setSkuStatus("available");
+        setSkuFeedback(
+          `✓ Category "${targetCategory}" has ${count} item(s). Allocated next SKU: ${candidateSku}`
+        );
+        setSkuSuggestions([]);
+        return candidateSku;
+      } catch {
+        const fallback = `AAV-${prefix}-001`;
+        if (forceUpdate || !sku.trim()) {
+          setSku(fallback);
+        }
+        setSkuStatus("available");
+        setSkuFeedback(`✓ Allocated: ${fallback}`);
+        return fallback;
+      }
+    },
+    [isEdit, sku, supabase]
+  );
+
+  // Auto-allocate SKU on mount if Add Product mode
+  useEffect(() => {
+    if (!isEdit && !initialProduct?.sku && !sku.trim()) {
+      autoAllocateSkuForCategory(category || "Dresses");
+    } else {
+      // Refresh count for label
+      supabase
+        .from("products")
+        .select("id, category")
+        .then(({ data }) => {
+          if (data) {
+            const catProds = data.filter(
+              (p) => p.category?.toLowerCase() === category.toLowerCase()
+            );
+            setCategoryCount(catProds.length);
+          }
+        });
+    }
+  }, [category, isEdit, initialProduct, autoAllocateSkuForCategory, supabase, sku]);
+
+  // Handle Category Change: update category and recalculate SKU if in auto-mode
+  const handleCategoryChange = (newCat: string) => {
+    setCategory(newCat);
+    if (!isEdit || isAutoSku || !sku.trim()) {
+      autoAllocateSkuForCategory(newCat, true);
+    } else {
+      // Just update count for the label
+      supabase
+        .from("products")
+        .select("id, category")
+        .then(({ data }) => {
+          if (data) {
+            const catProds = data.filter(
+              (p) => p.category?.toLowerCase() === newCat.toLowerCase()
+            );
+            setCategoryCount(catProds.length);
+          }
+        });
+    }
+  };
+
+  // Real-time Debounced SKU Uniqueness Validator
+  useEffect(() => {
+    if (skuDebounceRef.current) clearTimeout(skuDebounceRef.current);
+
+    const rawSku = sku.trim().toUpperCase();
+    if (!rawSku) {
+      setSkuStatus("invalid");
+      setSkuFeedback("SKU code is required.");
+      setSkuSuggestions([]);
+      return;
+    }
+
+    if (isEdit && initialProduct?.sku && rawSku === initialProduct.sku.trim().toUpperCase()) {
+      setSkuStatus("available");
+      setSkuFeedback("Current product SKU (unchanged).");
+      setSkuSuggestions([]);
+      return;
+    }
+
+    setSkuStatus("checking");
+    setSkuFeedback("Checking SKU uniqueness across boutique inventory...");
+
+    skuDebounceRef.current = setTimeout(async () => {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, sku, name");
+
+        if (error || !data) {
+          setSkuStatus("available");
+          setSkuFeedback("SKU is available!");
+          setSkuSuggestions([]);
+          return;
+        }
+
+        const conflict = data.find(
+          (p) =>
+            p.sku?.toUpperCase() === rawSku &&
+            (!isEdit || p.id !== initialProduct?.id)
+        );
+
+        if (conflict) {
+          setSkuStatus("taken");
+          setSkuFeedback(
+            `⚠️ SKU "${rawSku}" is already assigned to "${conflict.name}".`
+          );
+
+          // Generate suggestions
+          const takenSet = new Set(data.map((p) => p.sku?.toUpperCase()).filter(Boolean));
+          const prefixMatch = rawSku.match(/^(AAV-[A-Z0-9]+-?)(\d+)?$/);
+          const prefix = prefixMatch
+            ? prefixMatch[1].replace(/-$/, "")
+            : `AAV-${getCategoryCode(category)}`;
+          const baseNum =
+            prefixMatch && prefixMatch[2] ? parseInt(prefixMatch[2], 10) : 1;
+
+          const suggestions: string[] = [];
+          let testNum = baseNum + 1;
+          while (suggestions.length < 3 && testNum <= baseNum + 30) {
+            const candidate = `${prefix}-${String(testNum).padStart(3, "0")}`;
+            if (!takenSet.has(candidate)) {
+              suggestions.push(candidate);
+            }
+            testNum++;
+          }
+          setSkuSuggestions(suggestions);
+        } else {
+          setSkuStatus("available");
+          setSkuFeedback("✓ SKU is unique and ready to use!");
+          setSkuSuggestions([]);
+        }
+      } catch {
+        setSkuStatus("available");
+        setSkuFeedback("✓ SKU is available!");
+        setSkuSuggestions([]);
+      }
+    }, 280);
+
+    return () => {
+      if (skuDebounceRef.current) clearTimeout(skuDebounceRef.current);
+    };
+  }, [sku, isEdit, initialProduct, category, supabase]);
+
+  // ============================================================================
+  // COLOR SWATCHES & PUBLIC FREE COLOR API SEARCH (color.pizza API)
+  // ============================================================================
+  const getSwatchHex = useCallback(
+    (colorName: string): string => {
+      const lower = colorName.trim().toLowerCase();
+      if (colorHexMap[lower]) return colorHexMap[lower];
+      const match = PRESET_COLORS.find((p) => p.name.toLowerCase() === lower);
+      if (match) return match.hex;
+      if (/^#[0-9a-f]{3,6}$/i.test(colorName)) return colorName;
+      return "#c5a059"; // elegant gold default
+    },
+    [colorHexMap]
+  );
+
+  const handleAddColorWithNameAndHex = (name: string, hex?: string) => {
+    const clean = name.trim();
+    if (!clean) return;
+    if (!selectedColors.includes(clean)) {
+      setSelectedColors((prev) => [...prev, clean]);
+      if (hex) {
+        setColorHexMap((prev) => ({ ...prev, [clean.toLowerCase()]: hex }));
+      }
+      toast.success(`Color "${clean}" added to variants.`, "Color Added");
+    }
+    setCustomColorInput("");
+    setColorSearchResults([]);
+  };
+
+  const handleNativeColorChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const hex = e.target.value;
+    setNativePickerColor(hex);
+    try {
+      const cleanHex = hex.replace("#", "");
+      const res = await fetch(`https://api.color.pizza/v1/?values=${cleanHex}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.colors && data.colors[0]?.name) {
+          const detectedName = data.colors[0].name;
+          setCustomColorInput(detectedName);
+          setColorHexMap((prev) => ({ ...prev, [detectedName.toLowerCase()]: hex }));
+        }
+      }
+    } catch {
+      // Ignore network failures
+    }
+  };
+
+  // Debounced search on public free color.pizza API
+  useEffect(() => {
+    if (colorSearchDebounceRef.current) clearTimeout(colorSearchDebounceRef.current);
+    const query = customColorInput.trim();
+    if (query.length < 2) {
+      setColorSearchResults([]);
+      setIsSearchingColor(false);
+      return;
+    }
+
+    setIsSearchingColor(true);
+    colorSearchDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://api.color.pizza/v1/names/?name=${encodeURIComponent(query)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data.colors && Array.isArray(data.colors)) {
+            const list = data.colors.slice(0, 6).map((c: any) => ({
+              name: c.name,
+              hex: c.hex.startsWith("#") ? c.hex : `#${c.hex}`,
+            }));
+            setColorSearchResults(list);
+          }
+        }
+      } catch {
+        // Free API fallback
+      } finally {
+        setIsSearchingColor(false);
+      }
+    }, 280);
+
+    return () => {
+      if (colorSearchDebounceRef.current) clearTimeout(colorSearchDebounceRef.current);
+    };
+  }, [customColorInput]);
 
   // 5. Auto-load draft on mount for Add Product mode
   useEffect(() => {
@@ -543,6 +884,80 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
     setHighlights((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // Category-specific Story & Highlights Presets
+  const categoryPreset = useMemo(() => getCategoryContentPreset(category), [category]);
+
+  const handleApplyStoryTemplate = (title: string, text: string) => {
+    setDescription(text);
+    toast.success(`Applied "${title}" atelier story template!`, "Story Updated");
+  };
+
+  const handleApplyHighlightSuggestion = (item: string) => {
+    if (highlights.includes(item)) {
+      setHighlights((prev) => prev.filter((h) => h !== item));
+      toast.info(`Removed highlight point.`, "Highlight Removed");
+    } else {
+      setHighlights((prev) => [...prev, item]);
+      toast.success(`Added highlight: "${item.slice(0, 36)}..."`, "Highlight Added");
+    }
+  };
+
+  const handleAddAllCategoryHighlights = () => {
+    const newItems = categoryPreset.highlightSuggestions.filter(
+      (h) => !highlights.includes(h)
+    );
+    if (newItems.length === 0) {
+      toast.info(`All ${categoryPreset.categoryLabel} highlights are already added.`, "Up to Date");
+      return;
+    }
+    setHighlights((prev) => [...prev, ...newItems]);
+    toast.success(
+      `Added ${newItems.length} curated highlights for ${categoryPreset.categoryLabel}!`,
+      "Highlights Applied"
+    );
+  };
+
+  const handleApplyFullCategoryPreset = () => {
+    if (categoryPreset.storyTemplates.length > 0) {
+      setDescription(categoryPreset.storyTemplates[0].text);
+    }
+    const newItems = categoryPreset.highlightSuggestions.filter(
+      (h) => !highlights.includes(h)
+    );
+    if (newItems.length > 0) {
+      setHighlights((prev) => [...prev, ...newItems]);
+    }
+    toast.success(
+      `Applied complete ${categoryPreset.categoryLabel} story template and ${newItems.length} craftsmanship points!`,
+      "Category Content Applied"
+    );
+  };
+
+  // Fabric & Care Presets Handlers
+  const handleApplyFabricPreset = (preset: FabricPreset) => {
+    setFabric(preset.composition);
+    if (!care.trim() || care.includes("Dry clean") || care.includes("hand wash") || care.includes("Machine wash")) {
+      setCare(preset.recommendedCare);
+    }
+    if (preset.recommendedFit && (!fit.trim() || fit.includes("true to size"))) {
+      setFit(preset.recommendedFit);
+    }
+    toast.success(
+      `Applied "${preset.label}" composition & matching wash care guide!`,
+      "Fabric Applied"
+    );
+  };
+
+  const handleApplyFitPreset = (fitText: string, label: string) => {
+    setFit(fitText);
+    toast.success(`Applied ${label} fit guide!`, "Fit Updated");
+  };
+
+  const handleApplyCarePreset = (careText: string, label: string) => {
+    setCare(careText);
+    toast.success(`Applied ${label} wash care guide!`, "Care Updated");
+  };
+
   // Variants handlers
   const toggleColor = (col: string) => {
     setSelectedColors((prev) =>
@@ -608,6 +1023,21 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
       return;
     }
 
+    const cleanSku = sku.trim().toUpperCase();
+    if (!cleanSku) {
+      setNotification({ text: "SKU code is mandatory.", type: "error" });
+      toast.error("SKU code is required. Click Auto-Allocate to generate one.", "SKU Required");
+      setActiveTab("pricing");
+      return;
+    }
+
+    if (skuStatus === "taken") {
+      setNotification({ text: "Please resolve the duplicate SKU conflict.", type: "error" });
+      toast.error("The SKU code is already assigned to another product.", "SKU Conflict");
+      setActiveTab("pricing");
+      return;
+    }
+
     setIsSaving(true);
     setNotification(null);
 
@@ -622,7 +1052,7 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
       price: numPrice,
       original_price: originalPrice ? Number(originalPrice) : null,
       stock_count: Number(stockCount) || 1,
-      sku: sku.trim() || `AAV-${cleanSlug.slice(0, 6).toUpperCase()}`,
+      sku: cleanSku,
       badge: badge.trim() || null,
       is_bestseller: isBestseller,
       in_stock: inStock,
@@ -908,7 +1338,7 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
                     label="Category"
                     required
                     value={category}
-                    onChange={setCategory}
+                    onChange={handleCategoryChange}
                     options={categoryDropdownOptions}
                     searchable
                     placeholder="Select Category"
@@ -1258,24 +1688,126 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
-                    SKU Code
-                  </label>
-                  <input
-                    type="text"
-                    value={sku}
-                    onChange={(e) => setSku(e.target.value)}
-                    placeholder="AAV-DRS-001"
-                    style={{
-                      width: "100%",
-                      padding: "0.7rem 0.9rem",
-                      borderRadius: "6px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "0.9rem",
-                      outline: "none",
-                      fontFamily: "monospace",
-                    }}
-                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+                    <label style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)" }}>
+                      SKU Code *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => autoAllocateSkuForCategory(category, true)}
+                      title="Re-calculate next sequential SKU based on category product count"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#b45309",
+                        fontSize: "0.72rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.25rem",
+                        padding: 0,
+                        textDecoration: "underline",
+                      }}
+                    >
+                      ⚡ Auto-Allocate ({category}: {categoryCount} items)
+                    </button>
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="text"
+                      required
+                      value={sku}
+                      onChange={(e) => {
+                        setIsAutoSku(false);
+                        setSku(e.target.value.toUpperCase());
+                      }}
+                      placeholder="e.g. AAV-DRS-004"
+                      style={{
+                        width: "100%",
+                        padding: "0.7rem 0.9rem",
+                        paddingRight: "2.5rem",
+                        borderRadius: "6px",
+                        border: `1px solid ${
+                          skuStatus === "available"
+                            ? "#10b981"
+                            : skuStatus === "taken"
+                            ? "#ef4444"
+                            : "#d1d5db"
+                        }`,
+                        fontSize: "0.9rem",
+                        outline: "none",
+                        fontFamily: "monospace",
+                        letterSpacing: "0.05em",
+                        textTransform: "uppercase",
+                      }}
+                    />
+                    {/* Status Indicator Icon */}
+                    <div style={{ position: "absolute", right: "0.85rem", top: "50%", transform: "translateY(-50%)" }}>
+                      {skuStatus === "checking" && <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>🔄</span>}
+                      {skuStatus === "available" && <span style={{ color: "#10b981", fontWeight: 700 }}>✓</span>}
+                      {skuStatus === "taken" && <span style={{ color: "#ef4444", fontWeight: 700 }}>✕</span>}
+                    </div>
+                  </div>
+
+                  {/* Feedback & Suggestions */}
+                  {skuFeedback && (
+                    <p
+                      style={{
+                        fontSize: "0.75rem",
+                        marginTop: "0.35rem",
+                        color:
+                          skuStatus === "available"
+                            ? "#059669"
+                            : skuStatus === "taken"
+                            ? "#dc2626"
+                            : "#6b7280",
+                      }}
+                    >
+                      {skuFeedback}
+                    </p>
+                  )}
+
+                  {skuStatus === "taken" && skuSuggestions.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: "0.4rem",
+                        padding: "0.5rem 0.75rem",
+                        backgroundColor: "#fef2f2",
+                        border: "1px solid #fecaca",
+                        borderRadius: "6px",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.72rem", color: "#991b1b", fontWeight: 600, display: "block", marginBottom: "0.3rem" }}>
+                        Available Alternative SKUs (Click to apply):
+                      </span>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                        {skuSuggestions.map((sug) => (
+                          <button
+                            key={sug}
+                            type="button"
+                            onClick={() => {
+                              setSku(sug);
+                              setIsAutoSku(false);
+                            }}
+                            style={{
+                              padding: "0.2rem 0.5rem",
+                              fontSize: "0.72rem",
+                              borderRadius: "4px",
+                              backgroundColor: "#ffffff",
+                              border: "1px solid #f87171",
+                              color: "#b91c1c",
+                              cursor: "pointer",
+                              fontFamily: "monospace",
+                              fontWeight: 600,
+                            }}
+                          >
+                            + {sug}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1378,266 +1910,7 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
             </div>
           )}
 
-          {/* TAB 3: DESCRIPTIONS & STORY */}
-          {activeTab === "descriptions" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
-                  Long Atelier Description *
-                </label>
-                <textarea
-                  rows={5}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Crafted from ultra-luxe mulberry-blend fluid satin, this draped midi dress redefines contemporary evening wear..."
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem 0.9rem",
-                    borderRadius: "6px",
-                    border: "1px solid #d1d5db",
-                    fontSize: "0.88rem",
-                    outline: "none",
-                    lineHeight: 1.6,
-                  }}
-                />
-              </div>
-
-              {/* Highlights List (PDP Accordion items) */}
-              <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: "1.5rem" }}>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
-                  Garment Highlights & Atelier Craftsmanship Bullet Points
-                </label>
-
-                <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
-                  <input
-                    type="text"
-                    value={newHighlight}
-                    onChange={(e) => setNewHighlight(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddHighlight();
-                      }
-                    }}
-                    placeholder="e.g. Asymmetric gathered wrap drape designed to flatter all silhouettes"
-                    style={{
-                      flex: 1,
-                      padding: "0.65rem 0.85rem",
-                      borderRadius: "6px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "0.85rem",
-                      outline: "none",
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddHighlight}
-                    style={{
-                      padding: "0.65rem 1.25rem",
-                      borderRadius: "6px",
-                      backgroundColor: "var(--color-charcoal)",
-                      color: "#ffffff",
-                      border: "none",
-                      fontSize: "0.82rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    + Add Point
-                  </button>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  {highlights.map((item, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "0.65rem 0.9rem",
-                        backgroundColor: "#f8fafc",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "6px",
-                        fontSize: "0.85rem",
-                        color: "var(--color-charcoal)",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <span style={{ color: "var(--color-gold)" }}>•</span>
-                        <span>{item}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveHighlight(idx)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#94a3b8",
-                          cursor: "pointer",
-                          fontSize: "0.85rem",
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: FABRIC & CARE */}
-          {activeTab === "fabric" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
-              <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: 0 }}>
-                These fields directly populate the &quot;Fabric Composition &amp; Care&quot; accordion on the Product Detail Page.
-              </p>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
-                    Fabric Composition *
-                  </label>
-                  <input
-                    type="text"
-                    value={fabric}
-                    onChange={(e) => setFabric(e.target.value)}
-                    placeholder="e.g. 92% Viscose Satin, 8% Elastane blend"
-                    style={{
-                      width: "100%",
-                      padding: "0.7rem 0.9rem",
-                      borderRadius: "6px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "0.9rem",
-                      outline: "none",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
-                    Fit Guide *
-                  </label>
-                  <input
-                    type="text"
-                    value={fit}
-                    onChange={(e) => setFit(e.target.value)}
-                    placeholder="e.g. Relaxed tailored fit with gentle waist cinching; true to size"
-                    style={{
-                      width: "100%",
-                      padding: "0.7rem 0.9rem",
-                      borderRadius: "6px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "0.9rem",
-                      outline: "none",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
-                    Wash &amp; Care Guide *
-                  </label>
-                  <input
-                    type="text"
-                    value={care}
-                    onChange={(e) => setCare(e.target.value)}
-                    placeholder="e.g. Dry clean only or delicate cold hand wash with mild silk detergent"
-                    style={{
-                      width: "100%",
-                      padding: "0.7rem 0.9rem",
-                      borderRadius: "6px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "0.9rem",
-                      outline: "none",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <AdminDropdown
-                    label="Origin & Tailoring Atelier"
-                    required
-                    value={origin}
-                    onChange={setOrigin}
-                    options={ORIGIN_OPTIONS}
-                    placeholder="Select Origin & Atelier"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: SHIPPING & RETURNS */}
-          {activeTab === "shipping" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
-              <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: 0 }}>
-                These parameters populate the &quot;Pan-India Shipping &amp; Returns&quot; customer assurance accordion.
-              </p>
-
-              <div>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
-                  Dispatch Schedule
-                </label>
-                <textarea
-                  rows={2}
-                  value={shippingDispatch}
-                  onChange={(e) => setShippingDispatch(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "0.7rem 0.9rem",
-                    borderRadius: "6px",
-                    border: "1px solid #d1d5db",
-                    fontSize: "0.88rem",
-                    outline: "none",
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
-                  Transit Time
-                </label>
-                <textarea
-                  rows={2}
-                  value={shippingTransit}
-                  onChange={(e) => setShippingTransit(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "0.7rem 0.9rem",
-                    borderRadius: "6px",
-                    border: "1px solid #d1d5db",
-                    fontSize: "0.88rem",
-                    outline: "none",
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
-                  Exchanges &amp; Returns Policy
-                </label>
-                <textarea
-                  rows={2}
-                  value={shippingExchanges}
-                  onChange={(e) => setShippingExchanges(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "0.7rem 0.9rem",
-                    borderRadius: "6px",
-                    border: "1px solid #d1d5db",
-                    fontSize: "0.88rem",
-                    outline: "none",
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* TAB 6: COLOR & SIZE VARIANTS */}
+          {/* TAB 3: COLOR & SIZE VARIANTS (After Pricing & Stock) */}
           {activeTab === "variants" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
               {/* Color Selection */}
@@ -1647,74 +1920,276 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
                     Color Variants ({selectedColors.length} selected)
                   </label>
                   <p style={{ fontSize: "0.78rem", color: "#6b7280", margin: "0.2rem 0 0" }}>
-                    Select from boutique presets or add a custom atelier shade:
+                    Select from boutique presets or search shades via the free public Color API:
                   </p>
                 </div>
 
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
-                  {PRESET_COLORS.map((col) => {
-                    const isSelected = selectedColors.includes(col);
+                {/* Selected Colors Showcase with Visual Swatches */}
+                {selectedColors.length > 0 && (
+                  <div style={{ marginBottom: "1rem", padding: "0.75rem 1rem", backgroundColor: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                    <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569", display: "block", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                      Active Product Shades:
+                    </span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                      {selectedColors.map((col) => {
+                        const hex = getSwatchHex(col);
+                        return (
+                          <div
+                            key={col}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.5rem",
+                              backgroundColor: "#ffffff",
+                              border: "1px solid #cbd5e1",
+                              borderRadius: "999px",
+                              padding: "0.3rem 0.7rem 0.3rem 0.45rem",
+                              boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: "15px",
+                                height: "15px",
+                                borderRadius: "50%",
+                                backgroundColor: hex,
+                                border: "1px solid rgba(0,0,0,0.2)",
+                                flexShrink: 0,
+                                display: "inline-block",
+                              }}
+                            />
+                            <span style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--color-charcoal)" }}>
+                              {col}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => toggleColor(col)}
+                              title={`Remove ${col}`}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: "#94a3b8",
+                                cursor: "pointer",
+                                fontSize: "0.75rem",
+                                padding: "0 2px",
+                                display: "flex",
+                                alignItems: "center",
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+                              onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Preset Colors with Swatches */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.25rem" }}>
+                  {PRESET_COLORS.map((item) => {
+                    const isSelected = selectedColors.includes(item.name);
                     return (
                       <button
-                        key={col}
+                        key={item.name}
                         type="button"
-                        onClick={() => toggleColor(col)}
+                        onClick={() => toggleColor(item.name)}
                         style={{
-                          padding: "0.4rem 0.85rem",
+                          padding: "0.4rem 0.85rem 0.4rem 0.55rem",
                           borderRadius: "999px",
                           fontSize: "0.78rem",
                           fontWeight: isSelected ? 600 : 400,
-                          backgroundColor: isSelected ? "var(--color-charcoal)" : "#f3f4f6",
+                          backgroundColor: isSelected ? "var(--color-charcoal)" : "#ffffff",
                           color: isSelected ? "#ffffff" : "var(--color-charcoal)",
-                          border: "1px solid transparent",
+                          border: isSelected ? "1px solid var(--color-charcoal)" : "1px solid #d1d5db",
                           cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
                           transition: "all 0.15s ease",
                         }}
                       >
-                        {isSelected ? `✓ ${col}` : `+ ${col}`}
+                        <span
+                          style={{
+                            width: "13px",
+                            height: "13px",
+                            borderRadius: "50%",
+                            backgroundColor: item.hex,
+                            border: isSelected ? "1.5px solid #ffffff" : "1px solid rgba(0,0,0,0.2)",
+                            display: "inline-block",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span>{item.name}</span>
+                        {isSelected && <span style={{ fontSize: "0.7rem", marginLeft: "2px" }}>✓</span>}
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Add Custom Color Input */}
-                <div style={{ display: "flex", gap: "0.5rem", maxWidth: "340px" }}>
-                  <input
-                    type="text"
-                    value={customColorInput}
-                    onChange={(e) => setCustomColorInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddCustomColor();
-                      }
-                    }}
-                    placeholder="Custom color (e.g. Rust Orange)"
-                    style={{
-                      flex: 1,
-                      padding: "0.55rem 0.8rem",
-                      borderRadius: "6px",
-                      border: "1px solid #d1d5db",
-                      fontSize: "0.82rem",
-                      outline: "none",
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddCustomColor}
-                    style={{
-                      padding: "0.55rem 0.9rem",
-                      borderRadius: "6px",
-                      backgroundColor: "var(--color-charcoal)",
-                      color: "#ffffff",
-                      border: "none",
-                      fontSize: "0.78rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Add
-                  </button>
+                {/* Custom Color Search & Native Color Picker via Public Free API */}
+                <div style={{ position: "relative", maxWidth: "520px" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#475569", display: "block", marginBottom: "0.35rem" }}>
+                    Search &amp; Add Custom Shade (Free Public Color API):
+                  </label>
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                    {/* Native Color Picker Pipette */}
+                    <div
+                      title="Pick visual color"
+                      style={{
+                        position: "relative",
+                        width: "38px",
+                        height: "38px",
+                        borderRadius: "8px",
+                        border: "1px solid #cbd5e1",
+                        overflow: "hidden",
+                        backgroundColor: nativePickerColor,
+                        cursor: "pointer",
+                        flexShrink: 0,
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+                      }}
+                    >
+                      <input
+                        type="color"
+                        value={nativePickerColor}
+                        onChange={handleNativeColorChange}
+                        style={{
+                          position: "absolute",
+                          opacity: 0,
+                          width: "100%",
+                          height: "100%",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ position: "relative", flex: 1 }}>
+                      <input
+                        type="text"
+                        value={customColorInput}
+                        onChange={(e) => setCustomColorInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddCustomColor();
+                          }
+                        }}
+                        placeholder="Type shade (e.g. Lavender, Rose Gold, Amber)..."
+                        style={{
+                          width: "100%",
+                          padding: "0.6rem 0.85rem",
+                          paddingRight: isSearchingColor ? "2rem" : "0.85rem",
+                          borderRadius: "6px",
+                          border: "1px solid #d1d5db",
+                          fontSize: "0.84rem",
+                          outline: "none",
+                        }}
+                      />
+                      {isSearchingColor && (
+                        <div style={{ position: "absolute", right: "0.65rem", top: "50%", transform: "translateY(-50%)" }}>
+                          <span style={{ fontSize: "0.75rem", animation: "spin 1s linear infinite", display: "inline-block" }}>🔄</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddCustomColor}
+                      style={{
+                        padding: "0.6rem 1.1rem",
+                        borderRadius: "6px",
+                        backgroundColor: "var(--color-charcoal)",
+                        color: "#ffffff",
+                        border: "none",
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {/* Public Color API Live Search Dropdown */}
+                  {colorSearchResults.length > 0 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        marginTop: "0.35rem",
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.15)",
+                        zIndex: 30,
+                        overflow: "hidden",
+                        padding: "0.4rem 0",
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: "0.3rem 0.75rem",
+                          fontSize: "0.7rem",
+                          fontWeight: 600,
+                          color: "#64748b",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                          borderBottom: "1px solid #f1f5f9",
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span>API Color Matches</span>
+                        <span>Click to Select</span>
+                      </div>
+                      <div style={{ maxHeight: "210px", overflowY: "auto" }}>
+                        {colorSearchResults.map((match) => (
+                          <div
+                            key={match.name + match.hex}
+                            onClick={() => handleAddColorWithNameAndHex(match.name, match.hex)}
+                            style={{
+                              padding: "0.5rem 0.75rem",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              cursor: "pointer",
+                              transition: "background-color 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8fafc")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                              <span
+                                style={{
+                                  width: "16px",
+                                  height: "16px",
+                                  borderRadius: "50%",
+                                  backgroundColor: match.hex,
+                                  border: "1px solid rgba(0,0,0,0.18)",
+                                  display: "inline-block",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span style={{ fontSize: "0.82rem", fontWeight: 500, color: "#1e293b" }}>
+                                {match.name}
+                              </span>
+                              <span style={{ fontSize: "0.72rem", color: "#94a3b8", fontFamily: "monospace" }}>
+                                {match.hex}
+                              </span>
+                            </div>
+                            <span style={{ fontSize: "0.75rem", color: "#059669", fontWeight: 600 }}>
+                              + Add
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1794,6 +2269,582 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
                     Add
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: DESCRIPTIONS & STORY */}
+          {activeTab === "descriptions" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
+              {/* Category-Specific Preset Banner */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "0.75rem",
+                  padding: "0.85rem 1.1rem",
+                  backgroundColor: "#fdf8f4",
+                  border: "1px solid #f3e8df",
+                  borderRadius: "8px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <span style={{ fontSize: "1.3rem" }}>{categoryPreset.icon}</span>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--color-charcoal)" }}>
+                        {categoryPreset.categoryLabel} Story &amp; Craftsmanship Presets
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "0.68rem",
+                          padding: "0.15rem 0.45rem",
+                          backgroundColor: "#faebd7",
+                          color: "#92400e",
+                          borderRadius: "4px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Category: {category}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: "0.74rem", color: "#78716c", display: "block" }}>
+                      Curated templates based on your selected category. Click any suggestion below to auto-fill.
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleApplyFullCategoryPreset}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                    padding: "0.45rem 0.95rem",
+                    backgroundColor: "var(--color-charcoal)",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+                  }}
+                >
+                  ⚡ Auto-Fill Full {categoryPreset.categoryLabel} Preset
+                </button>
+              </div>
+
+              {/* Long Atelier Description */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                  <label style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)" }}>
+                    Long Atelier Description *
+                  </label>
+                  <span style={{ fontSize: "0.72rem", color: "#6b7280" }}>
+                    {description.length} characters
+                  </span>
+                </div>
+                <textarea
+                  rows={5}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Crafted from ultra-luxe mulberry-blend fluid satin, this draped midi dress redefines contemporary evening wear..."
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem 0.9rem",
+                    borderRadius: "6px",
+                    border: "1px solid #d1d5db",
+                    fontSize: "0.88rem",
+                    outline: "none",
+                    lineHeight: 1.6,
+                  }}
+                />
+
+                {/* Category-Specific Story Suggestions (Click to auto-fill) */}
+                <div style={{ marginTop: "0.6rem" }}>
+                  <span
+                    style={{
+                      fontSize: "0.74rem",
+                      fontWeight: 600,
+                      color: "#64748b",
+                      display: "block",
+                      marginBottom: "0.45rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.03em",
+                    }}
+                  >
+                    ✨ Suggested Story Descriptions for {categoryPreset.categoryLabel} (Click to apply):
+                  </span>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "0.55rem" }}>
+                    {categoryPreset.storyTemplates.map((tpl, i) => {
+                      const isCurrent = description === tpl.text;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => handleApplyStoryTemplate(tpl.title, tpl.text)}
+                          style={{
+                            textAlign: "left",
+                            padding: "0.65rem 0.85rem",
+                            backgroundColor: isCurrent ? "#fdfbf7" : "#f8fafc",
+                            border: isCurrent ? "1px solid var(--color-gold, #c5a059)" : "1px solid #e2e8f0",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+                            <span style={{ fontSize: "0.78rem", fontWeight: 600, color: isCurrent ? "var(--color-gold, #92400e)" : "var(--color-charcoal)" }}>
+                              {isCurrent ? `✓ ${tpl.title}` : `+ ${tpl.title}`}
+                            </span>
+                            <span style={{ fontSize: "0.68rem", color: isCurrent ? "#b45309" : "#94a3b8", fontWeight: 500 }}>
+                              {isCurrent ? "Active" : "Click to apply"}
+                            </span>
+                          </div>
+                          <p
+                            style={{
+                              fontSize: "0.73rem",
+                              color: "#64748b",
+                              margin: 0,
+                              lineHeight: 1.4,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                          >
+                            {tpl.text}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Highlights List (PDP Accordion items) */}
+              <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: "1.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.4rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <label style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)" }}>
+                    Garment Highlights &amp; Atelier Craftsmanship Points ({highlights.length})
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAddAllCategoryHighlights}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "var(--color-gold, #b45309)",
+                      cursor: "pointer",
+                      padding: "0 4px",
+                    }}
+                  >
+                    + Add All {categoryPreset.categoryLabel} Highlights
+                  </button>
+                </div>
+
+                {/* Category-Specific Highlight Suggestions Chips */}
+                <div style={{ marginBottom: "1rem", padding: "0.75rem 0.9rem", backgroundColor: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <span
+                    style={{
+                      fontSize: "0.72rem",
+                      fontWeight: 600,
+                      color: "#475569",
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.03em",
+                    }}
+                  >
+                    ✨ Suggested Highlights for {categoryPreset.categoryLabel} (Click to toggle / add):
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                    {categoryPreset.highlightSuggestions.map((sug, idx) => {
+                      const isAdded = highlights.includes(sug);
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleApplyHighlightSuggestion(sug)}
+                          style={{
+                            padding: "0.35rem 0.75rem",
+                            borderRadius: "6px",
+                            fontSize: "0.76rem",
+                            fontWeight: isAdded ? 600 : 400,
+                            backgroundColor: isAdded ? "#ecfdf5" : "#ffffff",
+                            color: isAdded ? "#065f46" : "#334155",
+                            border: isAdded ? "1px solid #a7f3d0" : "1px solid #cbd5e1",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.35rem",
+                            transition: "all 0.15s ease",
+                            textAlign: "left",
+                          }}
+                        >
+                          <span>{isAdded ? "✓" : "+"}</span>
+                          <span>{sug}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Custom Highlight Input */}
+                <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+                  <input
+                    type="text"
+                    value={newHighlight}
+                    onChange={(e) => setNewHighlight(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddHighlight();
+                      }
+                    }}
+                    placeholder="Type custom point (e.g. Asymmetric gathered wrap drape designed to flatter all heights)..."
+                    style={{
+                      flex: 1,
+                      padding: "0.65rem 0.85rem",
+                      borderRadius: "6px",
+                      border: "1px solid #d1d5db",
+                      fontSize: "0.85rem",
+                      outline: "none",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddHighlight}
+                    style={{
+                      padding: "0.65rem 1.25rem",
+                      borderRadius: "6px",
+                      backgroundColor: "var(--color-charcoal)",
+                      color: "#ffffff",
+                      border: "none",
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    + Add Point
+                  </button>
+                </div>
+
+                {/* Active Highlights List */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {highlights.map((item, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "0.65rem 0.9rem",
+                        backgroundColor: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "6px",
+                        fontSize: "0.85rem",
+                        color: "var(--color-charcoal)",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <span style={{ color: "var(--color-gold, #c5a059)" }}>•</span>
+                        <span>{item}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveHighlight(idx)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#94a3b8",
+                          cursor: "pointer",
+                          fontSize: "0.85rem",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: FABRIC & CARE */}
+          {activeTab === "fabric" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
+              <div style={{ padding: "0.85rem 1.1rem", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+                <p style={{ fontSize: "0.82rem", color: "#475569", margin: 0, fontWeight: 500 }}>
+                  🧵 These fields directly populate the &quot;Fabric Composition &amp; Care&quot; accordion on the storefront Product Detail Page. Click any of the luxury suggestions below to auto-fill with standard atelier specifications.
+                </p>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+                {/* Fabric Composition */}
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
+                    Fabric Composition *
+                  </label>
+                  <input
+                    type="text"
+                    value={fabric}
+                    onChange={(e) => setFabric(e.target.value)}
+                    placeholder="e.g. 100% Pure Handloom Chanderi Silk with fine metallic zari weave"
+                    style={{
+                      width: "100%",
+                      padding: "0.7rem 0.9rem",
+                      borderRadius: "6px",
+                      border: "1px solid #d1d5db",
+                      fontSize: "0.9rem",
+                      outline: "none",
+                    }}
+                  />
+
+                  {/* Fabric Composition Suggestions */}
+                  <div style={{ marginTop: "0.55rem" }}>
+                    <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#64748b", display: "block", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                      ✨ Curated Boutique Fabrics (Click to auto-fill composition &amp; recommended care):
+                    </span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                      {FABRIC_COMPOSITION_SUGGESTIONS.map((f, i) => {
+                        const isSelected = fabric.trim() === f.composition;
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => handleApplyFabricPreset(f)}
+                            title={`${f.composition}\n\nRecommended Care: ${f.recommendedCare}`}
+                            style={{
+                              padding: "0.3rem 0.65rem",
+                              borderRadius: "5px",
+                              fontSize: "0.75rem",
+                              fontWeight: isSelected ? 600 : 400,
+                              backgroundColor: isSelected ? "var(--color-charcoal)" : "#ffffff",
+                              color: isSelected ? "#ffffff" : "#334155",
+                              border: isSelected ? "1px solid var(--color-charcoal)" : "1px solid #d1d5db",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.35rem",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            {isSelected && <span style={{ fontSize: "0.7rem" }}>✓</span>}
+                            <span>{f.label}</span>
+                            {f.tag && (
+                              <span
+                                style={{
+                                  fontSize: "0.64rem",
+                                  padding: "0.1rem 0.35rem",
+                                  borderRadius: "3px",
+                                  backgroundColor: isSelected ? "rgba(255,255,255,0.2)" : "#f1f5f9",
+                                  color: isSelected ? "#ffffff" : "#64748b",
+                                }}
+                              >
+                                {f.tag}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fit Guide */}
+                <div>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
+                    Fit Guide *
+                  </label>
+                  <input
+                    type="text"
+                    value={fit}
+                    onChange={(e) => setFit(e.target.value)}
+                    placeholder="e.g. Relaxed tailored fit with gentle waist contouring; true to size"
+                    style={{
+                      width: "100%",
+                      padding: "0.7rem 0.9rem",
+                      borderRadius: "6px",
+                      border: "1px solid #d1d5db",
+                      fontSize: "0.9rem",
+                      outline: "none",
+                    }}
+                  />
+
+                  {/* Fit Suggestions */}
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#64748b", display: "block", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                      ✨ Quick Fit Presets (Click to auto-fill):
+                    </span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                      {FIT_SUGGESTIONS.map((fitItem, i) => {
+                        const isSelected = fit.trim() === fitItem.text;
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => handleApplyFitPreset(fitItem.text, fitItem.label)}
+                            title={fitItem.text}
+                            style={{
+                              padding: "0.25rem 0.6rem",
+                              borderRadius: "4px",
+                              fontSize: "0.74rem",
+                              fontWeight: isSelected ? 600 : 400,
+                              backgroundColor: isSelected ? "var(--color-charcoal)" : "#f8fafc",
+                              color: isSelected ? "#ffffff" : "#475569",
+                              border: isSelected ? "1px solid var(--color-charcoal)" : "1px solid #e2e8f0",
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            {isSelected ? `✓ ${fitItem.label}` : `+ ${fitItem.label}`}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Wash & Care Guide */}
+                <div>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
+                    Wash &amp; Care Guide *
+                  </label>
+                  <input
+                    type="text"
+                    value={care}
+                    onChange={(e) => setCare(e.target.value)}
+                    placeholder="e.g. Dry clean only to preserve artisanal zari luster and delicate weave"
+                    style={{
+                      width: "100%",
+                      padding: "0.7rem 0.9rem",
+                      borderRadius: "6px",
+                      border: "1px solid #d1d5db",
+                      fontSize: "0.9rem",
+                      outline: "none",
+                    }}
+                  />
+
+                  {/* Care Suggestions */}
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#64748b", display: "block", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                      ✨ Quick Care Presets (Click to auto-fill):
+                    </span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                      {CARE_SUGGESTIONS.map((careItem, i) => {
+                        const isSelected = care.trim() === careItem.text;
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => handleApplyCarePreset(careItem.text, careItem.label)}
+                            title={careItem.text}
+                            style={{
+                              padding: "0.25rem 0.6rem",
+                              borderRadius: "4px",
+                              fontSize: "0.74rem",
+                              fontWeight: isSelected ? 600 : 400,
+                              backgroundColor: isSelected ? "var(--color-charcoal)" : "#f8fafc",
+                              color: isSelected ? "#ffffff" : "#475569",
+                              border: isSelected ? "1px solid var(--color-charcoal)" : "1px solid #e2e8f0",
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            {isSelected ? `✓ ${careItem.label}` : `+ ${careItem.label}`}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Origin Atelier Dropdown */}
+                <div>
+                  <AdminDropdown
+                    label="Origin & Tailoring Atelier"
+                    required
+                    value={origin}
+                    onChange={setOrigin}
+                    options={ORIGIN_OPTIONS}
+                    placeholder="Select Origin & Atelier"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: SHIPPING & RETURNS */}
+          {activeTab === "shipping" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
+              <p style={{ fontSize: "0.82rem", color: "#6b7280", margin: 0 }}>
+                These parameters populate the &quot;Pan-India Shipping &amp; Returns&quot; customer assurance accordion.
+              </p>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
+                  Dispatch Schedule
+                </label>
+                <textarea
+                  rows={2}
+                  value={shippingDispatch}
+                  onChange={(e) => setShippingDispatch(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "0.7rem 0.9rem",
+                    borderRadius: "6px",
+                    border: "1px solid #d1d5db",
+                    fontSize: "0.88rem",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
+                  Transit Time
+                </label>
+                <textarea
+                  rows={2}
+                  value={shippingTransit}
+                  onChange={(e) => setShippingTransit(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "0.7rem 0.9rem",
+                    borderRadius: "6px",
+                    border: "1px solid #d1d5db",
+                    fontSize: "0.88rem",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--color-charcoal)", marginBottom: "0.4rem" }}>
+                  Exchanges &amp; Returns Policy
+                </label>
+                <textarea
+                  rows={2}
+                  value={shippingExchanges}
+                  onChange={(e) => setShippingExchanges(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "0.7rem 0.9rem",
+                    borderRadius: "6px",
+                    border: "1px solid #d1d5db",
+                    fontSize: "0.88rem",
+                    outline: "none",
+                  }}
+                />
               </div>
             </div>
           )}
