@@ -9,6 +9,7 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import CartDrawer from "@/components/CartDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
+import AdminDropdown, { DropdownOption } from "@/components/admin/AdminDropdown";
 import { ProductItem } from "@/data/products";
 import { Category } from "@/data/categories";
 
@@ -18,6 +19,14 @@ interface ShopViewProps {
 }
 
 type SortOption = "featured" | "newest" | "price-asc" | "price-desc" | "rating";
+
+const SORT_OPTIONS: DropdownOption[] = [
+  { value: "featured", label: "Featured" },
+  { value: "newest", label: "Newest First" },
+  { value: "price-asc", label: "Price: Low to High" },
+  { value: "price-desc", label: "Price: High to Low" },
+  { value: "rating", label: "Top Rated" },
+];
 
 export default function ShopView({
   initialCategories,
@@ -553,9 +562,8 @@ export default function ShopView({
                 Showing {filteredProducts.length} product{filteredProducts.length === 1 ? "" : "s"}
               </span>
 
-              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <label
-                  htmlFor="shop-sort"
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <span
                   style={{
                     fontSize: "0.78rem",
                     fontFamily: "var(--font-sans)",
@@ -564,29 +572,15 @@ export default function ShopView({
                   }}
                 >
                   Sort by:
-                </label>
-                <select
-                  id="shop-sort"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: "0.78rem",
-                    padding: "0.45rem 0.8rem",
-                    borderRadius: "4px",
-                    border: "1px solid rgba(195, 185, 175, 0.4)",
-                    backgroundColor: "#ffffff",
-                    color: "var(--color-charcoal)",
-                    cursor: "pointer",
-                    outline: "none",
-                  }}
-                >
-                  <option value="featured">Featured</option>
-                  <option value="newest">Newest First</option>
-                  <option value="price-asc">Price: Low to High</option>
-                  <option value="price-desc">Price: High to Low</option>
-                  <option value="rating">Top Rated</option>
-                </select>
+                </span>
+                <div style={{ width: "175px" }}>
+                  <AdminDropdown
+                    options={SORT_OPTIONS}
+                    value={sortBy}
+                    onChange={(val) => setSortBy(val as SortOption)}
+                    size="sm"
+                  />
+                </div>
               </div>
             </div>
           </div>

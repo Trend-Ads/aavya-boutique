@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useUI } from "@/context/UIContext";
 
 const NAV_ITEMS = [
   {
@@ -41,7 +42,7 @@ const NAV_ITEMS = [
   {
     id: "bottom-nav-wishlist",
     label: "Wishlist",
-    href: "#",
+    href: "/wishlist",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -64,6 +65,7 @@ const NAV_ITEMS = [
 ];
 
 export default function MobileBottomNav() {
+  const { cartCount, wishlistCount } = useUI();
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [activeItem, setActiveItem] = useState("bottom-nav-home");
@@ -124,6 +126,13 @@ export default function MobileBottomNav() {
       >
         {NAV_ITEMS.map((item) => {
           const isActive = activeItem === item.id;
+          const badgeCount =
+            item.id === "bottom-nav-wishlist"
+              ? wishlistCount
+              : item.id === "bottom-nav-bag"
+              ? cartCount
+              : 0;
+
           return (
             <a
               key={item.id}
@@ -144,13 +153,41 @@ export default function MobileBottomNav() {
                 color: isActive ? "var(--color-charcoal)" : "var(--color-taupe)",
                 transition: "color 0.2s, transform 0.15s",
                 padding: "0 0.5rem",
+                position: "relative",
               }}
               onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.92)")}
               onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
               onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.92)")}
               onTouchEnd={(e) => (e.currentTarget.style.transform = "scale(1)")}
             >
-              {item.icon}
+              <div style={{ position: "relative", display: "inline-flex" }}>
+                {item.icon}
+                {badgeCount > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: -4,
+                      right: -8,
+                      width: 15,
+                      height: 15,
+                      borderRadius: "50%",
+                      backgroundColor:
+                        item.id === "bottom-nav-bag"
+                          ? "var(--color-burgundy)"
+                          : "var(--color-gold, #c5a059)",
+                      color: "white",
+                      fontSize: "0.52rem",
+                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    aria-hidden="true"
+                  >
+                    {badgeCount}
+                  </span>
+                )}
+              </div>
               <span
                 style={{
                   fontFamily: "var(--font-sans)",

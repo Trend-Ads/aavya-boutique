@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useUI } from "@/context/UIContext";
 import MobileMenuDrawer from "./MobileMenuDrawer";
 
@@ -22,7 +23,7 @@ const NAV_LINKS: NavLink[] = [
 ];
 
 export default function Header() {
-  const { openCart, openSearch, openMobileMenu, isMobileMenuOpen, cartCount } = useUI();
+  const { openCart, openSearch, openMobileMenu, isMobileMenuOpen, cartCount, wishlistCount } = useUI();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -236,32 +237,11 @@ export default function Header() {
                 <IconSearch />
               </button>
 
-              {/* Account */}
-              <button
-                id="account-btn"
-                aria-label="My Account"
-                className="hidden md:flex"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "10px",
-                  color: "var(--color-charcoal)",
-                  transition: "color 0.3s, transform 0.2s",
-                  minWidth: 44,
-                  minHeight: 44,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <IconUser />
-              </button>
-
-              {/* Wishlist — desktop only */}
-              <button
+              {/* Wishlist Link with Live Count */}
+              <Link
+                href="/wishlist"
                 id="wishlist-btn"
-                aria-label="Wishlist"
-                className="hidden md:flex"
+                aria-label={`Wishlist, ${wishlistCount} items`}
                 style={{
                   background: "none",
                   border: "none",
@@ -271,12 +251,37 @@ export default function Header() {
                   transition: "color 0.3s, transform 0.2s",
                   minWidth: 44,
                   minHeight: 44,
+                  display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  position: "relative",
+                  textDecoration: "none",
                 }}
               >
                 <IconHeart />
-              </button>
+                {wishlistCount > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: 6,
+                      right: 6,
+                      width: 16,
+                      height: 16,
+                      borderRadius: "50%",
+                      backgroundColor: "var(--color-gold, #c5a059)",
+                      color: "white",
+                      fontSize: "0.55rem",
+                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    aria-hidden="true"
+                  >
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
 
               {/* Cart */}
               <button

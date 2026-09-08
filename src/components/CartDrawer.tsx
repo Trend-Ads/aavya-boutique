@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useUI } from "@/context/UIContext";
 
 export default function CartDrawer() {
-  const { isCartOpen, closeCart, cartItems, removeFromCart, updateQuantity } = useUI();
+  const { isCartOpen, closeCart, cartItems, removeFromCart, updateQuantity, clearCart } = useUI();
 
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -14,18 +14,41 @@ export default function CartDrawer() {
   const whatsappCheckoutUrl = useMemo(() => {
     if (cartItems.length === 0) return "https://wa.me/918594031993";
 
-    let message = `Hello Aavya Boutique! 🌸\nI would like to place an order from your store:\n\n*Order Details:*\n`;
+    const baseUrl =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://aavyaboutique.in";
+
+    let message = `Hello Aavya Boutique! 🌸\nI would like to place an order for the following boutique items:\n\n*🛍️ ORDER DETAILS:*\n`;
+
     cartItems.forEach((item, index) => {
+      const itemTotal = item.price * item.quantity;
+      const productSlug =
+        item.slug ||
+        item.name
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+      const productUrl = `${baseUrl}/product/${productSlug}`;
+      const imageUrl = item.image.startsWith("http")
+        ? item.image
+        : `${baseUrl}${item.image.startsWith("/") ? "" : "/"}${item.image}`;
+
+      message += `------------------------------\n`;
       message += `${index + 1}. *${item.name}*\n`;
       message += `   • Size: ${item.size}\n`;
       if (item.color) {
         message += `   • Color: ${item.color}\n`;
       }
       message += `   • Quantity: ${item.quantity}\n`;
-      message += `   • Price: ₹${(item.price * item.quantity).toLocaleString("en-IN")}\n\n`;
+      message += `   • Price: ₹${itemTotal.toLocaleString("en-IN")}\n`;
+      message += `   • 🔗 Product: ${productUrl}\n`;
+      message += `   • 🖼️ Image: ${imageUrl}\n\n`;
     });
 
-    message += `*Total Amount:* ₹${subtotal.toLocaleString("en-IN")}\n`;
+    message += `------------------------------\n`;
+    message += `*Total Order Value:* ₹${subtotal.toLocaleString("en-IN")}\n`;
     message += `*Shipping:* Free Shipping across India 📦\n\n`;
     message += `Please confirm my order and share the payment details. Thank you!`;
 
@@ -390,28 +413,49 @@ export default function CartDrawer() {
               </svg>
               <span>Checkout via WhatsApp →</span>
             </a>
-            <button
-              id="cart-continue-shopping"
-              onClick={closeCart}
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                width: "100%",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-                fontSize: "0.72rem",
-                color: "var(--color-taupe)",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                padding: "0.625rem",
-                minHeight: 44,
-                transition: "color 0.2s",
-              }}
-            >
-              Continue Shopping
-            </button>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "0.25rem" }}>
+              <button
+                id="cart-continue-shopping"
+                onClick={closeCart}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "0.72rem",
+                  color: "var(--color-taupe)",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  padding: "0.5rem 0",
+                  transition: "color 0.2s",
+                }}
+              >
+                ← Continue Shopping
+              </button>
+
+              <button
+                id="cart-clear-bag"
+                onClick={() => {
+                  if (confirm("Are you sure you want to empty your shopping bag?")) {
+                    clearCart();
+                  }
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "0.72rem",
+                  color: "#9ca3af",
+                  padding: "0.5rem 0",
+                  transition: "color 0.2s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
+              >
+                Empty Bag
+              </button>
+            </div>
           </div>
         )}
       </aside>

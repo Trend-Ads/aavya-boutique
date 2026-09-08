@@ -39,7 +39,7 @@ export default function ProductDetailView({
   product,
   relatedProducts,
 }: ProductDetailViewProps) {
-  const { addToCart, openCart } = useUI();
+  const { addToCart, openCart, isInWishlist, toggleWishlist } = useUI();
 
   // Gallery state
   const [activeImageIdx, setActiveImageIdx] = useState(0);
@@ -50,7 +50,7 @@ export default function ProductDetailView({
   const [selectedColor, setSelectedColor] = useState(product.colors[0] || "Ivory");
   const [selectedSize, setSelectedSize] = useState(product.sizes[1] || product.sizes[0] || "S");
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const isWishlisted = typeof isInWishlist === "function" ? isInWishlist(product.id) : false;
 
   // UI state
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
@@ -81,6 +81,7 @@ export default function ProductDetailView({
   const handleAddToCart = () => {
     addToCart({
       id: `${product.id}-${selectedSize}-${selectedColor}`,
+      slug: product.slug,
       name: product.name,
       price: product.price,
       image: galleryImages[activeImageIdx] || product.image,
@@ -806,7 +807,23 @@ export default function ProductDetailView({
                   type="button"
                   id="wishlist-pdp"
                   aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                  onClick={() => setIsWishlisted((prev) => !prev)}
+                  onClick={() => {
+                    if (typeof toggleWishlist === "function") {
+                      toggleWishlist({
+                        id: product.id,
+                        slug: product.slug,
+                        name: product.name,
+                        price: product.price,
+                        originalPrice: product.originalPrice,
+                        image: galleryImages[0] || product.image,
+                        category: product.category,
+                        colors: product.colors,
+                        inStock: product.inStock,
+                        badge: product.badge,
+                        descriptor: product.descriptor,
+                      });
+                    }
+                  }}
                   style={{
                     width: 48,
                     height: 48,

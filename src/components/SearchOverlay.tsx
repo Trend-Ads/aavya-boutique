@@ -224,13 +224,30 @@ export default function SearchOverlay() {
             {query ? `Results for "${query}"` : "Popular Right Now"}
           </p>
           {(() => {
-            const filtered = query.trim()
-              ? allProducts.filter(
-                  (p) =>
-                    p.name.toLowerCase().includes(query.toLowerCase()) ||
-                    p.category.toLowerCase().includes(query.toLowerCase()) ||
-                    p.descriptor.toLowerCase().includes(query.toLowerCase())
-                )
+            const q = query.trim().toLowerCase();
+            const filtered = q
+              ? allProducts.filter((p) => {
+                  const nameMatch = p.name?.toLowerCase().includes(q);
+                  const categoryMatch = p.category?.toLowerCase().includes(q);
+                  const descriptorMatch = p.descriptor?.toLowerCase().includes(q);
+                  const taglineMatch = p.tagline?.toLowerCase().includes(q);
+                  const skuMatch = p.sku?.toLowerCase().includes(q);
+                  const descMatch = p.description?.toLowerCase().includes(q);
+                  const fabricMatch = p.details?.fabric?.toLowerCase().includes(q);
+                  const colorMatch = p.colors?.some((c) => c.toLowerCase().includes(q));
+                  const highlightMatch = p.highlights?.some((h) => h.toLowerCase().includes(q));
+                  return (
+                    nameMatch ||
+                    categoryMatch ||
+                    descriptorMatch ||
+                    taglineMatch ||
+                    skuMatch ||
+                    descMatch ||
+                    fabricMatch ||
+                    colorMatch ||
+                    highlightMatch
+                  );
+                })
               : allProducts.slice(0, 4);
 
             if (filtered.length === 0) {
@@ -240,7 +257,7 @@ export default function SearchOverlay() {
                     No results found for &ldquo;{query}&rdquo;
                   </p>
                   <p style={{ fontFamily: "var(--font-sans)", fontSize: "0.85rem", color: "var(--color-taupe)" }}>
-                    Try searching for &ldquo;Dresses&rdquo;, &ldquo;Kurtis&rdquo;, or &ldquo;Linen&rdquo;
+                    Try searching for &ldquo;Dresses&rdquo;, &ldquo;Kurtis&rdquo;, &ldquo;Silk&rdquo;, or &ldquo;Rose&rdquo;
                   </p>
                 </div>
               );

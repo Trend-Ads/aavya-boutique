@@ -1456,11 +1456,7 @@ export default function ProductForm({ initialProduct, isEdit = false }: ProductF
                 </div>
 
                 <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))",
-                    gap: "1.25rem",
-                  }}
+                  className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5"
                 >
                   {images.map((imgUrl, idx) => (
                     <div

@@ -22,8 +22,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const { addToCart, openCart } = useUI();
+  const { addToCart, openCart, isInWishlist, toggleWishlist } = useUI();
+  const isWishlisted = typeof isInWishlist === "function" ? isInWishlist(product.id) : false;
 
   const productSlug =
     product.slug ||
@@ -38,22 +38,37 @@ export default function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      size: "S",
-      quantity: 1,
-      color: product.colors[0],
-    });
-    openCart();
+    if (typeof addToCart === "function") {
+      addToCart({
+        id: `${product.id}-S-${product.colors[0] || "Standard"}`,
+        slug: productSlug,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        size: "S",
+        quantity: 1,
+        color: product.colors[0] || "Standard",
+      });
+    }
+    if (typeof openCart === "function") openCart();
   };
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted((prev) => !prev);
+    if (typeof toggleWishlist === "function") {
+      toggleWishlist({
+        id: product.id,
+        slug: productSlug,
+        name: product.name,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        image: product.image,
+        category: product.descriptor || "Boutique Collection",
+        colors: product.colors,
+        badge: product.badge,
+      });
+    }
   };
 
   return (

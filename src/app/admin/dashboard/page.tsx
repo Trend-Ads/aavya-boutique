@@ -159,8 +159,187 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div
+      {/* ── MOBILE VIEW: Coming Soon for Dashboard Data ── */}
+      <div className="block md:hidden" style={{ marginBottom: "2rem" }}>
+        {/* Quick Mobile Action Buttons */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gap: "0.75rem",
+            marginBottom: "1.5rem",
+          }}
+        >
+          <Link
+            href="/admin/products/new"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.4rem",
+              padding: "0.85rem 1rem",
+              borderRadius: "8px",
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              backgroundColor: "var(--color-charcoal)",
+              color: "#ffffff",
+              textDecoration: "none",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+            }}
+          >
+            <span>+ Add Product</span>
+          </Link>
+
+          <Link
+            href="/admin/products"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.4rem",
+              padding: "0.85rem 1rem",
+              borderRadius: "8px",
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              backgroundColor: "#ffffff",
+              color: "var(--color-charcoal)",
+              border: "1px solid #d1d5db",
+              textDecoration: "none",
+            }}
+          >
+            <span>Manage Products</span>
+          </Link>
+
+          <Link
+            href="/admin/categories"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.4rem",
+              padding: "0.85rem 1rem",
+              borderRadius: "8px",
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              backgroundColor: "#ffffff",
+              color: "var(--color-charcoal)",
+              border: "1px solid #d1d5db",
+              textDecoration: "none",
+            }}
+          >
+            <span>Categories</span>
+          </Link>
+
+          <Link
+            href="/"
+            target="_blank"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.4rem",
+              padding: "0.85rem 1rem",
+              borderRadius: "8px",
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              backgroundColor: "#f9fafb",
+              color: "#4b5563",
+              border: "1px solid #e5e7eb",
+              textDecoration: "none",
+            }}
+          >
+            <span>View Store ↗</span>
+          </Link>
+        </div>
+
+        {/* Coming Soon Notice Card */}
+        <div
+          style={{
+            backgroundColor: "#ffffff",
+            borderRadius: "14px",
+            border: "1px solid #e5e7eb",
+            padding: "2.5rem 1.5rem",
+            textAlign: "center",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+          }}
+        >
+          <div
+            style={{
+              width: "60px",
+              height: "60px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(197, 160, 89, 0.12)",
+              border: "1px solid rgba(197, 160, 89, 0.3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 1.25rem",
+              fontSize: "1.6rem",
+            }}
+          >
+            📊
+          </div>
+
+          <span
+            style={{
+              display: "inline-block",
+              padding: "0.25rem 0.75rem",
+              borderRadius: "999px",
+              backgroundColor: "rgba(197, 160, 89, 0.15)",
+              color: "var(--color-gold-dark)",
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              marginBottom: "0.85rem",
+            }}
+          >
+            Coming Soon
+          </span>
+
+          <h2
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "1.45rem",
+              fontWeight: 500,
+              color: "var(--color-charcoal)",
+              marginBottom: "0.5rem",
+            }}
+          >
+            Mobile Analytics & Reports
+          </h2>
+
+          <p
+            style={{
+              fontSize: "0.85rem",
+              color: "#6b7280",
+              lineHeight: 1.55,
+              maxWidth: "340px",
+              margin: "0 auto 1.75rem",
+            }}
+          >
+            Comprehensive visual charts, inventory demand graphs, and live revenue feeds are currently being optimized for mobile displays.
+          </p>
+
+          <div
+            style={{
+              padding: "1rem",
+              backgroundColor: "#f9fafb",
+              borderRadius: "8px",
+              border: "1px dashed #d1d5db",
+              fontSize: "0.78rem",
+              color: "#4b5563",
+            }}
+          >
+            💡 Please view from a desktop or tablet browser to access the complete interactive dashboard suite and analytics.
+          </div>
+        </div>
+      </div>
+
+      {/* ── DESKTOP & TABLET VIEW: Full Interactive Analytics ── */}
+      <div className="hidden md:block">
+        {/* KPI Cards */}
+        <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
@@ -454,6 +633,7 @@ export default async function AdminDashboardPage() {
             </tbody>
           </table>
         </div>
+      </div>
       </div>
     </div>
   );

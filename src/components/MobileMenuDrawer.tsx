@@ -15,6 +15,7 @@ const MAIN_NAV = [
 ];
 
 const SECONDARY_NAV = [
+  { label: "My Wishlist", href: "/wishlist" },
   { label: "About", href: "#about" },
   { label: "Contact", href: "#contact" },
   { label: "Track Order", href: "#track" },
