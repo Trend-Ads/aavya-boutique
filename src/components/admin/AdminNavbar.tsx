@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import PwaInstallButton from "./PwaInstallButton";
 
 interface AdminNavbarProps {
   userEmail?: string;
@@ -96,8 +97,11 @@ export default function AdminNavbar({ userEmail, onToggleSidebar }: AdminNavbarP
         </div>
       </div>
 
-      {/* Right side: Live Store, Email, Sign Out */}
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+      {/* Right side: PWA Install, Live Store, Email, Sign Out */}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        {/* PWA Install Button */}
+        <PwaInstallButton variant="navbar" />
+
         <Link
           href="/"
           target="_blank"

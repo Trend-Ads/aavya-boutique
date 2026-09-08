@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import PwaInstallButton from "./PwaInstallButton";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -319,6 +320,9 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             );
           })}
         </nav>
+
+        {/* PWA Web App Install Option */}
+        <PwaInstallButton variant="sidebar" />
 
         {/* Sidebar Footer Link to Live Store */}
         <div

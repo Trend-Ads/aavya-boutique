@@ -1,0 +1,68 @@
+{
+  "name": "Aavya Boutique — Admin Portal",
+  "short_name": "Aavya Admin",
+  "description": "Administrative management portal for Aavya Boutique inventory, products, and categories.",
+  "start_url": "/admin/dashboard",
+  "scope": "/admin/",
+  "id": "/admin/dashboard",
+  "display": "standalone",
+  "background_color": "#161616",
+  "theme_color": "#161616",
+  "orientation": "any",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Admin Dashboard",
+      "short_name": "Dashboard",
+      "description": "View inventory stats, quick metrics, and updates",
+      "url": "/admin/dashboard",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Products Manager",
+      "short_name": "Products",
+      "description": "Manage catalog, pricing, listings, and stock",
+      "url": "/admin/products",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Add New Product",
+      "short_name": "New Product",
+      "description": "Upload media, variants, and publish products",
+      "url": "/admin/products/new",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Categories Manager",
+      "short_name": "Categories",
+      "description": "Curate boutique categories and banners",
+      "url": "/admin/categories",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}
