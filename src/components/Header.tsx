@@ -4,12 +4,21 @@ import { useState, useEffect } from "react";
 import { useUI } from "@/context/UIContext";
 import MobileMenuDrawer from "./MobileMenuDrawer";
 
-const NAV_LINKS = [
-  { label: "Men", href: "#men", hasDropdown: true },
-  { label: "Women", href: "#shop", hasDropdown: true },
-  { label: "Accessories", href: "#accessories", hasDropdown: true },
-  { label: "More", href: "#collections", hasDropdown: true },
-  { label: "On Sale", href: "#sale", isSale: true, hasDropdown: true },
+interface NavLink {
+  label: string;
+  href: string;
+  isSale?: boolean;
+  hasDropdown?: boolean;
+}
+
+const NAV_LINKS: NavLink[] = [
+  { label: "Shop All", href: "/shop" },
+  { label: "Dresses", href: "/shop?category=dresses" },
+  { label: "Kurtis", href: "/shop?category=kurtis" },
+  { label: "Co-ords", href: "/shop?category=co-ords" },
+  { label: "Ethnic", href: "/shop?category=ethnic" },
+  { label: "Party Wear", href: "/shop?category=party-wear" },
+  { label: "Sale", href: "/shop?badge=Sale", isSale: true },
 ];
 
 export default function Header() {

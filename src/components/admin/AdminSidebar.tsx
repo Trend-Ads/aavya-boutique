@@ -33,6 +33,16 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       ),
     },
     {
+      label: "Categories",
+      href: "/admin/categories",
+      icon: (active) => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? "var(--color-gold-light)" : "currentColor"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+          <line x1="7" y1="7" x2="7.01" y2="7" />
+        </svg>
+      ),
+    },
+    {
       label: "Products",
       href: "/admin/products",
       icon: (active) => (
@@ -52,16 +62,6 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="16" />
           <line x1="8" y1="12" x2="16" y2="12" />
-        </svg>
-      ),
-    },
-    {
-      label: "Categories",
-      href: "/admin/categories",
-      icon: (active) => (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? "var(--color-gold-light)" : "currentColor"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-          <line x1="7" y1="7" x2="7.01" y2="7" />
         </svg>
       ),
     },

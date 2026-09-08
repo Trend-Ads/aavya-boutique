@@ -4,14 +4,14 @@ import { useEffect } from "react";
 import { useUI } from "@/context/UIContext";
 
 const MAIN_NAV = [
-  { label: "New Arrivals", href: "#new-arrivals" },
-  { label: "Shop", href: "#shop" },
-  { label: "Dresses", href: "#dresses" },
-  { label: "Kurtis", href: "#kurtis" },
-  { label: "Co-ords", href: "#coords" },
-  { label: "Ethnic", href: "#ethnic" },
-  { label: "Party Wear", href: "#partywear" },
-  { label: "Sale", href: "#sale" },
+  { label: "Shop All", href: "/shop" },
+  { label: "New In", href: "/shop?badge=New" },
+  { label: "Dresses", href: "/shop?category=dresses" },
+  { label: "Kurtis", href: "/shop?category=kurtis" },
+  { label: "Co-ords", href: "/shop?category=co-ords" },
+  { label: "Ethnic", href: "/shop?category=ethnic" },
+  { label: "Party Wear", href: "/shop?category=party-wear" },
+  { label: "Sale", href: "/shop?badge=Sale" },
 ];
 
 const SECONDARY_NAV = [

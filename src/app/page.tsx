@@ -17,7 +17,27 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import CartDrawer from "@/components/CartDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 
-export default function Home() {
+import { createClient } from "@/lib/supabase/server";
+import { DEFAULT_CATEGORIES } from "@/data/categories";
+
+export default async function Home() {
+  const supabase = await createClient();
+  let categories = DEFAULT_CATEGORIES;
+
+  try {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      categories = data;
+    }
+  } catch (err) {
+    console.error("Failed to fetch categories from Supabase on Home page:", err);
+  }
+
   return (
     <>
       {/* Fixed UI Layer */}
@@ -30,7 +50,7 @@ export default function Home() {
         <HeroSection />
 
         {/* 2. Categories */}
-        <CategoryStrip />
+        <CategoryStrip categories={categories} />
 
         {/* Divider */}
         <div className="divider" />

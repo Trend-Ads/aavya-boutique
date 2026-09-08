@@ -1,19 +1,20 @@
 "use client";
 
 import { useRef } from "react";
+import Link from "next/link";
+import { Category, DEFAULT_CATEGORIES } from "@/data/categories";
 
-const CATEGORIES = [
-  { label: "New In", image: "/images/cat-newin.jpg", href: "#new-arrivals" },
-  { label: "Dresses", image: "/images/cat-dresses.jpg", href: "#dresses" },
-  { label: "Kurtis", image: "/images/cat-kurtis.jpg", href: "#kurtis" },
-  { label: "Co-ords", image: "/images/cat-coords.jpg", href: "#coords" },
-  { label: "Tops", image: "/images/cat-tops.jpg", href: "#tops" },
-  { label: "Ethnic", image: "/images/cat-ethnic.jpg", href: "#ethnic" },
-  { label: "Party Wear", image: "/images/cat-partywear.jpg", href: "#partywear" },
-];
+interface CategoryStripProps {
+  categories?: Category[];
+}
 
-export default function CategoryStrip() {
+export default function CategoryStrip({ categories = DEFAULT_CATEGORIES }: CategoryStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Filter only active categories and sort by display_order
+  const activeCategories = (categories.length > 0 ? categories : DEFAULT_CATEGORIES)
+    .filter((cat) => cat.is_active !== false)
+    .sort((a, b) => a.display_order - b.display_order);
 
   return (
     <section
@@ -44,64 +45,77 @@ export default function CategoryStrip() {
           WebkitOverflowScrolling: "touch",
         }}
       >
-        {CATEGORIES.map((cat) => (
-          <a
-            key={cat.label}
-            href={cat.href}
-            id={`cat-${cat.label.toLowerCase().replace(/\s+/g, "-")}`}
-            aria-label={`Shop ${cat.label}`}
-            style={{
-              flex: "0 0 auto",
-              width: "clamp(110px, 26vw, 160px)",
-              scrollSnapAlign: "start",
-              textDecoration: "none",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "0.6rem",
-              cursor: "pointer",
-            }}
-          >
-            {/* Category Image */}
-            <div
+        {activeCategories.map((cat) => {
+          const categoryImage =
+            cat.image_url ||
+            DEFAULT_CATEGORIES.find((d) => d.slug === cat.slug)?.image_url ||
+            "/images/cat-dresses.jpg";
+
+          return (
+            <Link
+              key={cat.id || cat.slug}
+              href={`/shop?category=${cat.slug}`}
+              id={`cat-${cat.slug}`}
+              aria-label={`Shop ${cat.name}`}
               style={{
-                width: "100%",
-                aspectRatio: "3/4",
-                overflow: "hidden",
-                backgroundColor: "var(--color-cream)",
+                flex: "0 0 auto",
+                width: "clamp(110px, 26vw, 160px)",
+                scrollSnapAlign: "start",
+                textDecoration: "none",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "0.6rem",
+                cursor: "pointer",
               }}
             >
-              <img
-                src={cat.image}
-                alt={cat.label}
-                loading="lazy"
+              {/* Category Image */}
+              <div
                 style={{
                   width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: "center top",
-                  transition: "transform 0.5s var(--ease-smooth)",
+                  aspectRatio: "3/4",
+                  overflow: "hidden",
+                  backgroundColor: "var(--color-cream)",
+                  borderRadius: "2px",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-              />
-            </div>
+              >
+                <img
+                  src={categoryImage}
+                  alt={cat.name}
+                  loading="lazy"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center top",
+                    transition: "transform 0.5s var(--ease-smooth)",
+                  }}
+                  onMouseEnter={(e) =>
+                    ((e.currentTarget as HTMLElement).style.transform = "scale(1.06)")
+                  }
+                  onMouseLeave={(e) =>
+                    ((e.currentTarget as HTMLElement).style.transform = "scale(1)")
+                  }
+                />
+              </div>
 
-            {/* Label */}
-            <span
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: "0.65rem",
-                fontWeight: 500,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                color: "var(--color-charcoal)",
-              }}
-            >
-              {cat.label}
-            </span>
-          </a>
-        ))}
+              {/* Label */}
+              <span
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "0.68rem",
+                  fontWeight: 600,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "var(--color-charcoal)",
+                  textAlign: "center",
+                }}
+              >
+                {cat.name}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
