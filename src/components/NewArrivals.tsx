@@ -1,79 +1,9 @@
 "use client";
 
 import ProductCard from "./ProductCard";
+import { PRODUCTS } from "@/data/products";
 
-const NEW_ARRIVALS = [
-  {
-    id: "na-1",
-    name: "Satin Draped Midi Dress",
-    descriptor: "Flowing satin with wrap silhouette",
-    price: 2490,
-    image: "/images/product-1.jpg",
-    colors: ["Dusty Rose", "Ivory", "Charcoal"],
-    badge: "New",
-  },
-  {
-    id: "na-2",
-    name: "Linen Co-ord Set",
-    descriptor: "Relaxed blazer & wide-leg trousers",
-    price: 3290,
-    image: "/images/product-2.jpg",
-    colors: ["Sage Green", "Sand", "Cream"],
-    badge: "New",
-  },
-  {
-    id: "na-3",
-    name: "Block Print Kurta",
-    descriptor: "Handcrafted cotton with border motifs",
-    price: 1890,
-    image: "/images/product-3.jpg",
-    colors: ["Terracotta", "Navy", "Blush"],
-  },
-  {
-    id: "na-4",
-    name: "Gold Embroidered Anarkali",
-    descriptor: "Silk with zari border & dupatta",
-    price: 4990,
-    originalPrice: 6490,
-    image: "/images/product-4.jpg",
-    colors: ["Teal", "Burgundy", "Ivory"],
-    badge: "Sale",
-  },
-  {
-    id: "na-5",
-    name: "Off-Shoulder Linen Top",
-    descriptor: "Effortless summer essential",
-    price: 1290,
-    image: "/images/product-5.jpg",
-    colors: ["Sand", "Cream", "Lavender"],
-    badge: "New",
-  },
-  {
-    id: "na-6",
-    name: "Floral Wrap Maxi",
-    descriptor: "Flowy print with tie-front waist",
-    price: 2190,
-    image: "/images/product-1.jpg",
-    colors: ["Dusty Rose", "Teal"],
-  },
-  {
-    id: "na-7",
-    name: "Minimal Silk Kurta",
-    descriptor: "Understated luxury in pure silk",
-    price: 3490,
-    image: "/images/product-2.jpg",
-    colors: ["Ivory", "Charcoal", "Terracotta"],
-    isBestseller: true,
-  },
-  {
-    id: "na-8",
-    name: "Print Palazzos",
-    descriptor: "Relaxed co-ord with bold print",
-    price: 1690,
-    image: "/images/product-3.jpg",
-    colors: ["Navy", "Sage Green"],
-  },
-];
+const NEW_ARRIVALS = PRODUCTS;
 
 export default function NewArrivals() {
   return (

@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { getAllProducts } from "@/data/products";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://aavyaboutique.in";
   const now = new Date();
 
-  return [
+  const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}`,
       lastModified: now,
@@ -60,4 +61,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     },
   ];
+
+  const productRoutes: MetadataRoute.Sitemap = getAllProducts().map((product) => ({
+    url: `${baseUrl}/product/${product.slug}`,
+    lastModified: now,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+
+  return [...staticRoutes, ...productRoutes];
 }

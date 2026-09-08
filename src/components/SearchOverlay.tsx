@@ -1,16 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useUI } from "@/context/UIContext";
+import { PRODUCTS } from "@/data/products";
 
 const SUGGESTED_SEARCHES = ["Dresses", "Kurtis", "Co-ords", "Party Wear", "New Arrivals", "Ethnic", "Tops"];
-
-const POPULAR_PRODUCTS = [
-  { id: "sp-1", name: "Satin Draped Midi Dress", price: 2490, image: "/images/product-1.jpg" },
-  { id: "sp-2", name: "Linen Co-ord Set", price: 3290, image: "/images/product-2.jpg" },
-  { id: "sp-3", name: "Block Print Kurta", price: 1890, image: "/images/product-3.jpg" },
-  { id: "sp-4", name: "Teal Anarkali Set", price: 4990, image: "/images/product-4.jpg" },
-];
 
 export default function SearchOverlay() {
   const { isSearchOpen, closeSearch } = useUI();
@@ -185,53 +180,79 @@ export default function SearchOverlay() {
           >
             {query ? `Results for "${query}"` : "Popular Right Now"}
           </p>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "1rem",
-            }}
-            className="md:grid-cols-4"
-          >
-            {POPULAR_PRODUCTS.map((product) => (
-              <a
-                key={product.id}
-                href="#"
-                id={`search-result-${product.id}`}
-                onClick={closeSearch}
-                style={{ textDecoration: "none" }}
-              >
-                <div
-                  style={{
-                    aspectRatio: "3/4",
-                    overflow: "hidden",
-                    backgroundColor: "var(--color-cream)",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      objectPosition: "center top",
-                      transition: "transform 0.4s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                  />
+          {(() => {
+            const filtered = query.trim()
+              ? PRODUCTS.filter(
+                  (p) =>
+                    p.name.toLowerCase().includes(query.toLowerCase()) ||
+                    p.category.toLowerCase().includes(query.toLowerCase()) ||
+                    p.descriptor.toLowerCase().includes(query.toLowerCase())
+                )
+              : PRODUCTS.slice(0, 4);
+
+            if (filtered.length === 0) {
+              return (
+                <div style={{ padding: "3rem 0", textAlign: "center" }}>
+                  <p style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", color: "var(--color-charcoal)", marginBottom: "0.5rem" }}>
+                    No results found for &ldquo;{query}&rdquo;
+                  </p>
+                  <p style={{ fontFamily: "var(--font-sans)", fontSize: "0.85rem", color: "var(--color-taupe)" }}>
+                    Try searching for &ldquo;Dresses&rdquo;, &ldquo;Kurtis&rdquo;, or &ldquo;Linen&rdquo;
+                  </p>
                 </div>
-                <p style={{ fontFamily: "var(--font-sans)", fontSize: "0.8rem", color: "var(--color-charcoal)", marginBottom: "0.2rem" }}>
-                  {product.name}
-                </p>
-                <p style={{ fontFamily: "var(--font-sans)", fontSize: "0.8rem", fontWeight: 500, color: "var(--color-charcoal)" }}>
-                  ₹{product.price.toLocaleString("en-IN")}
-                </p>
-              </a>
-            ))}
-          </div>
+              );
+            }
+
+            return (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: "1rem",
+                }}
+                className="md:grid-cols-4"
+              >
+                {filtered.map((product) => (
+                  <Link
+                    key={product.id}
+                    href={`/product/${product.slug}`}
+                    id={`search-result-${product.id}`}
+                    onClick={closeSearch}
+                    style={{ textDecoration: "none" }}
+                  >
+                    <div
+                      style={{
+                        aspectRatio: "3/4",
+                        overflow: "hidden",
+                        backgroundColor: "var(--color-cream)",
+                        marginBottom: "0.5rem",
+                      }}
+                    >
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          objectPosition: "center top",
+                          transition: "transform 0.4s",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                      />
+                    </div>
+                    <p style={{ fontFamily: "var(--font-sans)", fontSize: "0.8rem", color: "var(--color-charcoal)", marginBottom: "0.2rem" }}>
+                      {product.name}
+                    </p>
+                    <p style={{ fontFamily: "var(--font-sans)", fontSize: "0.8rem", fontWeight: 500, color: "var(--color-charcoal)" }}>
+                      ₹{product.price.toLocaleString("en-IN")}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

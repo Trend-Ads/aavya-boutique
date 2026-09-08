@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useUI } from "@/context/UIContext";
 
 interface Product {
   id: string;
+  slug?: string;
   name: string;
   descriptor: string;
   price: number;
@@ -23,7 +25,19 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const { addToCart, openCart } = useUI();
 
-  const handleAddToCart = () => {
+  const productSlug =
+    product.slug ||
+    product.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const productUrl = `/product/${productSlug}`;
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     addToCart({
       id: product.id,
       name: product.name,
@@ -38,6 +52,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsWishlisted((prev) => !prev);
   };
 
@@ -48,18 +63,24 @@ export default function ProductCard({ product }: ProductCardProps) {
     >
       {/* Image Container */}
       <div className="product-image-wrap" style={{ position: "relative", overflow: "hidden" }}>
-        <img
-          src={product.image}
-          alt={`${product.name} — Aavya Boutique`}
-          loading="lazy"
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center top",
-            transition: "transform 0.55s var(--ease-smooth)",
-          }}
-        />
+        <Link
+          href={productUrl}
+          aria-label={`View details of ${product.name}`}
+          style={{ display: "block", width: "100%", height: "100%", textDecoration: "none" }}
+        >
+          <img
+            src={product.image}
+            alt={`${product.name} — Aavya Boutique`}
+            loading="lazy"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center top",
+              transition: "transform 0.55s var(--ease-smooth)",
+            }}
+          />
+        </Link>
 
         {/* Badge */}
         {product.badge && (
@@ -76,6 +97,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               backgroundColor: "var(--color-charcoal)",
               color: "var(--color-ivory)",
               padding: "0.3rem 0.6rem",
+              pointerEvents: "none",
             }}
           >
             {product.badge}
@@ -105,6 +127,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             color: isWishlisted ? "var(--color-burgundy)" : "var(--color-charcoal)",
             transition: "color 0.25s, transform 0.2s",
             backdropFilter: "blur(4px)",
+            zIndex: 2,
           }}
         >
           <svg
@@ -146,6 +169,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             transform: "translateY(100%)",
             transition: "transform 0.28s var(--ease-smooth)",
             minHeight: "44px",
+            zIndex: 2,
           }}
           onFocus={(e) => (e.currentTarget.style.transform = "translateY(0)")}
           onBlur={(e) => (e.currentTarget.style.transform = "translateY(100%)")}
@@ -167,7 +191,16 @@ export default function ProductCard({ product }: ProductCardProps) {
             letterSpacing: "0.01em",
           }}
         >
-          {product.name}
+          <Link
+            href={productUrl}
+            style={{
+              color: "inherit",
+              textDecoration: "none",
+              transition: "color 0.2s",
+            }}
+          >
+            {product.name}
+          </Link>
         </h3>
 
         {/* Descriptor */}

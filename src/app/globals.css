@@ -611,4 +611,153 @@ html, body {
   }
 }
 
+/* ─── Product Detail Page Layout ──────────────────────────────── */
+.pdp-main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .pdp-main-grid {
+    grid-template-columns: 58% 42% !important;
+    gap: 3.5rem !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  .pdp-main-grid {
+    grid-template-columns: 60% 40% !important;
+    gap: 4.5rem !important;
+  }
+}
+
+/* Gallery layout */
+.pdp-gallery-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .pdp-gallery-wrap {
+    display: grid !important;
+    grid-template-columns: 90px 1fr !important;
+    gap: 1.25rem !important;
+    align-items: start;
+  }
+}
+
+.pdp-thumbnails-vertical {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .pdp-thumbnails-vertical {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 90px;
+    flex-shrink: 0;
+  }
+}
+
+.pdp-main-image-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background-color: var(--color-cream);
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+/* Right details column */
+.pdp-details-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .pdp-details-wrap {
+    position: sticky !important;
+    top: 86px !important;
+    align-self: start;
+  }
+}
+
+/* ─── Mobile Fixed Action Bar (Product Detail Page) ───────────── */
+.pdp-mobile-fixed-bar {
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background-color: rgba(248, 245, 240, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(195, 185, 175, 0.45);
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .pdp-mobile-fixed-bar {
+    display: none !important;
+  }
+}
+
+.pdp-mobile-btn {
+  flex: 1;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 0;
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  cursor: pointer;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pdp-mobile-btn-cart {
+  background-color: transparent;
+  color: var(--color-charcoal);
+  border: 1.5px solid var(--color-charcoal);
+}
+
+.pdp-mobile-btn-cart:active {
+  background-color: rgba(44, 44, 44, 0.06);
+  transform: scale(0.98);
+}
+
+.pdp-mobile-btn-buy {
+  background-color: var(--color-charcoal);
+  color: var(--color-ivory);
+  border: 1.5px solid var(--color-charcoal);
+}
+
+.pdp-mobile-btn-buy:active {
+  background-color: #1a1a1a;
+  transform: scale(0.98);
+}
+
+/* Ensure PDP content has bottom clearance on mobile */
+@media (max-width: 767px) {
+  .pdp-page-container {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+
 

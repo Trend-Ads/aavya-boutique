@@ -2,55 +2,9 @@
 
 import { useRef, useState } from "react";
 import ProductCard from "./ProductCard";
+import { PRODUCTS } from "@/data/products";
 
-const BESTSELLERS = [
-  {
-    id: "bs-1",
-    name: "Satin Draped Midi Dress",
-    descriptor: "Our most-loved evening look",
-    price: 2490,
-    image: "/images/product-1.jpg",
-    colors: ["Dusty Rose", "Ivory", "Charcoal"],
-    isBestseller: true,
-  },
-  {
-    id: "bs-2",
-    name: "Linen Blazer Co-ord",
-    descriptor: "Work-to-weekend essential",
-    price: 3290,
-    image: "/images/product-2.jpg",
-    colors: ["Sage Green", "Sand"],
-    isBestseller: true,
-  },
-  {
-    id: "bs-3",
-    name: "Block Print Kurta",
-    descriptor: "Wardrobe staple",
-    price: 1890,
-    image: "/images/product-3.jpg",
-    colors: ["Terracotta", "Navy", "Blush"],
-    isBestseller: true,
-  },
-  {
-    id: "bs-4",
-    name: "Teal Anarkali Set",
-    descriptor: "Ethnic elegance for every occasion",
-    price: 4990,
-    originalPrice: 6490,
-    image: "/images/product-4.jpg",
-    colors: ["Teal", "Burgundy"],
-    badge: "Sale",
-  },
-  {
-    id: "bs-5",
-    name: "Off-Shoulder Linen",
-    descriptor: "Weekend favourite",
-    price: 1290,
-    image: "/images/product-5.jpg",
-    colors: ["Sand", "Cream", "Lavender"],
-    isBestseller: true,
-  },
-];
+const BESTSELLERS = PRODUCTS.filter((p) => p.isBestseller);
 
 export default function Bestsellers() {
   const scrollRef = useRef<HTMLDivElement>(null);
