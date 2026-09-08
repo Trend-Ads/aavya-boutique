@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { PRODUCTS } from "@/data/products";
+import { ProductItem } from "@/data/products";
 
 export const metadata = {
   title: "Admin Dashboard | Aavya Boutique",
@@ -19,12 +19,46 @@ export default async function AdminDashboardPage() {
     redirect("/admin/login");
   }
 
-  // Calculate quick metrics
-  const totalProducts = PRODUCTS.length;
-  const inStockCount = PRODUCTS.filter((p) => p.inStock).length;
-  const categories = Array.from(new Set(PRODUCTS.map((p) => p.category)));
+  let productsList: ProductItem[] = [];
+  try {
+    const { data: dbProducts, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && dbProducts && dbProducts.length > 0) {
+      productsList = dbProducts.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        descriptor: p.descriptor,
+        tagline: p.tagline,
+        price: Number(p.price),
+        originalPrice: p.original_price ? Number(p.original_price) : undefined,
+        image: p.images?.[0] || p.image || "/images/product-1.jpg",
+        images: p.images && p.images.length > 0 ? p.images : [p.image],
+        category: p.category,
+        colors: p.colors || [],
+        sizes: p.sizes || [],
+        badge: p.badge || undefined,
+        isBestseller: p.is_bestseller,
+        inStock: p.in_stock,
+        stockCount: p.stock_count,
+        sku: p.sku || "",
+        description: p.description || "",
+        highlights: p.highlights || [],
+        details: p.details || { fabric: "", fit: "", care: "", origin: "" },
+        reviews: p.reviews || { rating: 5, count: 0, items: [] },
+      }));
+    }
+  } catch {}
+
+  // Calculate real live metrics
+  const totalProducts = productsList.length;
+  const inStockCount = productsList.filter((p) => p.inStock).length;
+  const categories = Array.from(new Set(productsList.map((p) => p.category)));
   const avgPrice = Math.round(
-    PRODUCTS.reduce((acc, p) => acc + p.price, 0) / (totalProducts || 1)
+    productsList.reduce((acc, p) => acc + p.price, 0) / (totalProducts || 1)
   );
 
   return (
@@ -295,7 +329,7 @@ export default async function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {PRODUCTS.slice(0, 6).map((product) => (
+              {productsList.slice(0, 6).map((product) => (
                 <tr
                   key={product.id}
                   style={{

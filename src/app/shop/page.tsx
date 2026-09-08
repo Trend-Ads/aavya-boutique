@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 import ShopView from "@/components/ShopView";
-import { PRODUCTS } from "@/data/products";
+import { ProductItem } from "@/data/products";
 import { DEFAULT_CATEGORIES } from "@/data/categories";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 export default async function ShopPage() {
   const supabase = await createClient();
   let categories = DEFAULT_CATEGORIES;
+  let productsList: ProductItem[] = [];
 
   try {
     const { data, error } = await supabase
@@ -25,8 +26,40 @@ export default async function ShopPage() {
     if (!error && data && data.length > 0) {
       categories = data;
     }
+
+    const { data: dbProducts, error: prodErr } = await supabase
+      .from("products")
+      .select("*")
+      .eq("is_listed", true)
+      .order("created_at", { ascending: false });
+
+    if (!prodErr && dbProducts && dbProducts.length > 0) {
+      productsList = dbProducts.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        descriptor: p.descriptor,
+        tagline: p.tagline,
+        price: Number(p.price),
+        originalPrice: p.original_price ? Number(p.original_price) : undefined,
+        image: p.images?.[0] || p.image || "/images/product-1.jpg",
+        images: p.images && p.images.length > 0 ? p.images : [p.image],
+        category: p.category,
+        colors: p.colors || [],
+        sizes: p.sizes || [],
+        badge: p.badge || undefined,
+        isBestseller: p.is_bestseller,
+        inStock: p.in_stock,
+        stockCount: p.stock_count,
+        sku: p.sku || "",
+        description: p.description || "",
+        highlights: p.highlights || [],
+        details: p.details || { fabric: "", fit: "", care: "", origin: "" },
+        reviews: p.reviews || { rating: 5, count: 0, items: [] },
+      }));
+    }
   } catch (err) {
-    console.error("Failed to load categories from Supabase in ShopPage:", err);
+    console.error("Failed to load products/categories from Supabase in ShopPage:", err);
   }
 
   return (
@@ -54,7 +87,7 @@ export default async function ShopPage() {
         </div>
       }
     >
-      <ShopView initialCategories={categories} initialProducts={PRODUCTS} />
+      <ShopView initialCategories={categories} initialProducts={productsList} />
     </Suspense>
   );
 }

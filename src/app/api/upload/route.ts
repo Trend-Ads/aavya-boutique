@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get("file");
+    const folder = (formData.get("folder") as string) || "aavya-products";
 
     if (!file) {
       return NextResponse.json(
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     const cloudinaryFormData = new FormData();
     cloudinaryFormData.append("file", file);
     cloudinaryFormData.append("upload_preset", uploadPreset);
-    cloudinaryFormData.append("folder", "aavya-categories");
+    cloudinaryFormData.append("folder", folder);
 
     const cloudinaryResponse = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,

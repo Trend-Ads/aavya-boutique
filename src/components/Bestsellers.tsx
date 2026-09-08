@@ -1,14 +1,22 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import ProductCard from "./ProductCard";
-import { PRODUCTS } from "@/data/products";
+import { ProductItem } from "@/data/products";
 
-const BESTSELLERS = PRODUCTS.filter((p) => p.isBestseller);
+interface BestsellersProps {
+  products?: ProductItem[];
+}
 
-export default function Bestsellers() {
+export default function Bestsellers({ products = [] }: BestsellersProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
+
+  const bestsellersList = products.filter((p) => p.isBestseller || p.badge === "Bestseller");
+  const displayItems = bestsellersList.length > 0 ? bestsellersList : products.slice(0, 6);
+
+  if (displayItems.length === 0) return null;
 
   const scrollToIdx = (idx: number) => {
     if (!scrollRef.current) return;
@@ -53,9 +61,9 @@ export default function Bestsellers() {
               Our Bestsellers
             </h2>
           </div>
-          <a href="#shop" id="view-all-bestsellers" className="btn-editorial">
+          <Link href="/shop" id="view-all-bestsellers" className="btn-editorial">
             View All →
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -74,7 +82,7 @@ export default function Bestsellers() {
           WebkitOverflowScrolling: "touch",
         }}
       >
-        {BESTSELLERS.map((product) => (
+        {displayItems.map((product) => (
           <div
             key={product.id}
             style={{
@@ -100,7 +108,7 @@ export default function Bestsellers() {
         role="tablist"
         aria-label="Bestsellers carousel navigation"
       >
-        {BESTSELLERS.map((_, idx) => (
+        {displayItems.map((_, idx) => (
           <button
             key={idx}
             role="tab"

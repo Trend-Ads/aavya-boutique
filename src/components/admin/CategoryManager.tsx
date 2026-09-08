@@ -5,18 +5,29 @@ import Image from "next/image";
 import { Category, DEFAULT_CATEGORIES } from "@/data/categories";
 import { createClient } from "@/lib/supabase/client";
 import ImageCropperModal from "./ImageCropperModal";
+import AdminDropdown from "./AdminDropdown";
+import ConfirmationModal from "./ConfirmationModal";
+import { useToast } from "@/context/ToastContext";
 
 interface CategoryManagerProps {
   initialCategories: Category[];
 }
 
 export default function CategoryManager({ initialCategories }: CategoryManagerProps) {
+  const toast = useToast();
   const [categories, setCategories] = useState<Category[]>(
     initialCategories.length > 0 ? initialCategories : DEFAULT_CATEGORIES
   );
   const [loading, setLoading] = useState(false);
   const [dbConnected, setDbConnected] = useState<boolean | null>(null);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
+
+  // Confirmation Modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    type: "delete" | "toggleActive";
+    category: Category;
+  } | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -278,10 +289,12 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
     if (!formData.name.trim()) return;
 
     if (slugStatus === "taken" || slugStatus === "invalid") {
+      const errorMsg = slugFeedback || "Please resolve the duplicate slug before saving.";
       setMessage({
-        text: slugFeedback || "Please resolve the duplicate slug before saving.",
+        text: errorMsg,
         type: "error",
       });
+      toast.error(errorMsg, "Duplicate Slug");
       return;
     }
 
@@ -331,11 +344,13 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
             text: "Updated locally. Note: Run supabase/schema.sql in Supabase SQL editor to sync with your database.",
             type: "info",
           });
+          toast.info(`Category "${formData.name}" updated locally.`, "Category Updated");
         } else {
           setMessage({
             text: `Category "${formData.name}" updated successfully!`,
             type: "success",
           });
+          toast.success(`Category "${formData.name}" updated successfully!`, "Category Updated");
           await loadCategories();
         }
         setEditingCategory(null);
@@ -366,11 +381,13 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
             text: `Category "${formData.name}" added locally. Run supabase/schema.sql in Supabase to sync persistently.`,
             type: "info",
           });
+          toast.info(`Category "${formData.name}" added locally.`, "Category Created");
         } else if (data) {
           setMessage({
             text: `Category "${formData.name}" created successfully!`,
             type: "success",
           });
+          toast.success(`Category "${formData.name}" created successfully!`, "Category Created");
           await loadCategories();
         }
         setIsAddModalOpen(false);
@@ -380,50 +397,72 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
         text: "An error occurred while saving the category.",
         type: "error",
       });
+      toast.error("An error occurred while saving the category.", "Save Failed");
     } finally {
       setLoading(false);
     }
   };
 
-  // Toggle Active Status
-  const handleToggleActive = async (cat: Category) => {
-    const updatedStatus = !cat.is_active;
-
-    // Optimistic UI
-    setCategories((prev) =>
-      prev.map((c) => (c.id === cat.id ? { ...c, is_active: updatedStatus } : c))
-    );
-
-    try {
-      const supabase = createClient();
-      await supabase
-        .from("categories")
-        .update({
-          is_active: updatedStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", cat.id);
-    } catch (err) {
-      console.warn("Could not sync category status with Supabase:", err);
-    }
+  // Request Toggle Active Confirmation
+  const handleRequestToggleActive = (cat: Category) => {
+    setConfirmModal({
+      type: "toggleActive",
+      category: cat,
+    });
   };
 
-  // Delete Category
-  const handleDelete = async (cat: Category) => {
-    if (!confirm(`Are you sure you want to delete the category "${cat.name}"?`)) {
-      return;
-    }
+  // Request Delete Confirmation
+  const handleRequestDelete = (cat: Category) => {
+    setConfirmModal({
+      type: "delete",
+      category: cat,
+    });
+  };
 
-    setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+  // Execute Confirmed Action
+  const handleExecuteConfirmedAction = async () => {
+    if (!confirmModal) return;
+    const { type, category: cat } = confirmModal;
+    setModalLoading(true);
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("categories").delete().eq("id", cat.id);
-      if (!error) {
-        setMessage({ text: `Category "${cat.name}" removed.`, type: "info" });
+      if (type === "delete") {
+        setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+        const supabase = createClient();
+        const { error } = await supabase.from("categories").delete().eq("id", cat.id);
+        if (!error) {
+          setMessage({ text: `Category "${cat.name}" removed successfully.`, type: "info" });
+          toast.success(`Category "${cat.name}" permanently deleted.`, "Category Deleted");
+        } else {
+          toast.info(`Category "${cat.name}" removed from session.`, "Category Removed");
+        }
+      } else if (type === "toggleActive") {
+        const updatedStatus = !cat.is_active;
+        setCategories((prev) =>
+          prev.map((c) => (c.id === cat.id ? { ...c, is_active: updatedStatus } : c))
+        );
+        const supabase = createClient();
+        await supabase
+          .from("categories")
+          .update({
+            is_active: updatedStatus,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", cat.id);
+
+        const statusMsg = `Category "${cat.name}" is now ${updatedStatus ? "Active on Storefront" : "Hidden (Inactive)"}.`;
+        setMessage({
+          text: statusMsg,
+          type: "success",
+        });
+        toast.success(statusMsg, "Status Updated");
       }
     } catch (err) {
-      console.warn("Error deleting category from Supabase:", err);
+      console.warn("Error executing category action:", err);
+      toast.error("An unexpected error occurred while executing action.", "Action Failed");
+    } finally {
+      setModalLoading(false);
+      setConfirmModal(null);
     }
   };
 
@@ -449,6 +488,7 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
               text: "Image cropped and uploaded to Cloudinary successfully!",
               type: "success",
             });
+            toast.success("Category image cropped and uploaded successfully!", "Image Uploaded");
           }}
         />
       )}
@@ -818,7 +858,7 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
                   </td>
                   <td style={{ padding: "1rem 1rem" }}>
                     <button
-                      onClick={() => handleToggleActive(cat)}
+                      onClick={() => handleRequestToggleActive(cat)}
                       style={{
                         background: "none",
                         border: "none",
@@ -899,7 +939,7 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
                       </button>
 
                       <button
-                        onClick={() => handleDelete(cat)}
+                        onClick={() => handleRequestDelete(cat)}
                         style={{
                           background: "none",
                           border: "none",
@@ -1500,42 +1540,21 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
                   />
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "flex-end",
-                  }}
-                >
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      cursor: "pointer",
-                      padding: "0.7rem 0",
-                      fontSize: "0.85rem",
-                      fontWeight: 500,
-                      color: "var(--color-charcoal)",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.is_active}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          is_active: e.target.checked,
-                        }))
-                      }
-                      style={{
-                        width: "16px",
-                        height: "16px",
-                        accentColor: "var(--color-charcoal)",
-                      }}
-                    />
-                    <span>Active on Storefront</span>
-                  </label>
+                <div>
+                  <AdminDropdown
+                    label="Storefront Status"
+                    value={formData.is_active ? "true" : "false"}
+                    onChange={(val) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        is_active: val === "true",
+                      }))
+                    }
+                    options={[
+                      { value: "true", label: "Active (Visible on Storefront)", badge: "Live" },
+                      { value: "false", label: "Inactive (Hidden)", badge: "Hidden" },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -1618,6 +1637,64 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
             </form>
           </div>
         </div>
+      )}
+
+      {/* Confirmation Modal for Category Delete and Toggle Active */}
+      {confirmModal && (
+        <ConfirmationModal
+          isOpen={true}
+          isLoading={modalLoading}
+          variant={
+            confirmModal.type === "delete"
+              ? "danger"
+              : confirmModal.category.is_active
+              ? "warning"
+              : "success"
+          }
+          title={
+            confirmModal.type === "delete"
+              ? "Delete Category"
+              : confirmModal.category.is_active
+              ? "Hide Category from Storefront"
+              : "Publish Category to Storefront"
+          }
+          message={
+            confirmModal.type === "delete" ? (
+              <span>
+                Are you sure you want to delete the category <strong>{confirmModal.category.name}</strong>?
+                Products associated with this category will remain, but the collection will no longer appear in the store.
+              </span>
+            ) : confirmModal.category.is_active ? (
+              <span>
+                Are you sure you want to deactivate <strong>{confirmModal.category.name}</strong>?
+                It will be hidden from the storefront header, home category strip, and catalog filters.
+              </span>
+            ) : (
+              <span>
+                Are you sure you want to activate <strong>{confirmModal.category.name}</strong>?
+                It will be immediately visible to customers across the site.
+              </span>
+            )
+          }
+          confirmText={
+            confirmModal.type === "delete"
+              ? "Delete Category"
+              : confirmModal.category.is_active
+              ? "Hide Category"
+              : "Activate Category"
+          }
+          cancelText="Cancel"
+          itemDetails={{
+            name: confirmModal.category.name,
+            subtitle: `Slug: /shop?category=${confirmModal.category.slug}`,
+            image: confirmModal.category.image_url || undefined,
+            badge: `#${confirmModal.category.display_order}`,
+          }}
+          onConfirm={handleExecuteConfirmedAction}
+          onClose={() => {
+            if (!modalLoading) setConfirmModal(null);
+          }}
+        />
       )}
     </div>
   );

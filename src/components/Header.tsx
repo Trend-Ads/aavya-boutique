@@ -18,7 +18,7 @@ const NAV_LINKS: NavLink[] = [
   { label: "Co-ords", href: "/shop?category=co-ords" },
   { label: "Ethnic", href: "/shop?category=ethnic" },
   { label: "Party Wear", href: "/shop?category=party-wear" },
-  { label: "Sale", href: "/shop?badge=Sale", isSale: true },
+  // { label: "Sale", href: "/shop?badge=Sale", isSale: true },
 ];
 
 export default function Header() {

@@ -31,17 +31,7 @@ interface UIContextType {
 
 const UIContext = createContext<UIContextType | null>(null);
 
-const INITIAL_CART: CartItem[] = [
-  {
-    id: "1",
-    name: "Satin Draped Midi Dress",
-    price: 2490,
-    image: "/images/product-1.jpg",
-    size: "S",
-    quantity: 1,
-    color: "Dusty Rose",
-  },
-];
+const INITIAL_CART: CartItem[] = [];
 
 export function UIProvider({ children }: { children: React.ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);

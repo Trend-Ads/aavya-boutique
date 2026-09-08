@@ -7,6 +7,7 @@ interface ImageCropperModalProps {
   imageSrc: string;
   onClose: () => void;
   onUploadSuccess: (cloudinaryUrl: string) => void;
+  folder?: string;
 }
 
 // Helper to load image
@@ -61,6 +62,7 @@ export default function ImageCropperModal({
   imageSrc,
   onClose,
   onUploadSuccess,
+  folder = "aavya-products",
 }: ImageCropperModalProps) {
   const [crop, setCrop] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -85,7 +87,8 @@ export default function ImageCropperModal({
 
       // 2. Upload to Cloudinary via server route
       const formData = new FormData();
-      formData.append("file", croppedBlob, "category.jpg");
+      formData.append("file", croppedBlob, "upload.jpg");
+      formData.append("folder", folder);
 
       const response = await fetch("/api/upload", {
         method: "POST",

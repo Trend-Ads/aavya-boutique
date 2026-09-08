@@ -5,7 +5,8 @@ import Header from "@/components/Header";
 import CartDrawer from "@/components/CartDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductDetailView from "@/components/ProductDetailView";
-import { getProductBySlug, getAllProducts, getRelatedProducts } from "@/data/products";
+import { ProductItem } from "@/data/products";
+import { createClient } from "@/lib/supabase/server";
 
 interface PageProps {
   params: Promise<{
@@ -15,16 +16,50 @@ interface PageProps {
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://aavyaboutique.in";
 
-export async function generateStaticParams() {
-  const products = getAllProducts();
-  return products.map((product) => ({
-    slug: product.slug,
-  }));
+export const dynamic = "force-dynamic";
+
+async function resolveProduct(slug: string): Promise<ProductItem | undefined> {
+  const supabase = await createClient();
+  try {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (!error && data) {
+      return {
+        id: data.id,
+        slug: data.slug,
+        name: data.name,
+        descriptor: data.descriptor,
+        tagline: data.tagline,
+        price: Number(data.price),
+        originalPrice: data.original_price ? Number(data.original_price) : undefined,
+        image: data.images?.[0] || data.image || "/images/product-1.jpg",
+        images: data.images && data.images.length > 0 ? data.images : [data.image],
+        category: data.category,
+        colors: data.colors || [],
+        sizes: data.sizes || [],
+        badge: data.badge || undefined,
+        isBestseller: data.is_bestseller,
+        inStock: data.in_stock,
+        stockCount: data.stock_count,
+        sku: data.sku || "",
+        description: data.description || "",
+        highlights: data.highlights || [],
+        details: data.details || { fabric: "", fit: "", care: "", origin: "" },
+        reviews: data.reviews || { rating: 5, count: 0, items: [] },
+      };
+    }
+  } catch {}
+
+  return undefined;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await resolveProduct(slug);
 
   if (!product) {
     return {
@@ -70,11 +105,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await resolveProduct(slug);
 
   if (!product) {
-    const fallbackRelated = getAllProducts().slice(0, 4);
-
     return (
       <>
         <AnnouncementBar />
@@ -130,7 +163,42 @@ export default async function ProductDetailPage({ params }: PageProps) {
     );
   }
 
-  const relatedProducts = getRelatedProducts(product.category, product.slug, 4);
+  const supabase = await createClient();
+  let relatedProducts: ProductItem[] = [];
+  try {
+    const { data: relData } = await supabase
+      .from("products")
+      .select("*")
+      .eq("is_listed", true)
+      .neq("slug", product.slug)
+      .limit(4);
+
+    if (relData && relData.length > 0) {
+      relatedProducts = relData.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        descriptor: p.descriptor,
+        tagline: p.tagline,
+        price: Number(p.price),
+        originalPrice: p.original_price ? Number(p.original_price) : undefined,
+        image: p.images?.[0] || p.image || "/images/product-1.jpg",
+        images: p.images && p.images.length > 0 ? p.images : [p.image],
+        category: p.category,
+        colors: p.colors || [],
+        sizes: p.sizes || [],
+        badge: p.badge || undefined,
+        isBestseller: p.is_bestseller,
+        inStock: p.in_stock,
+        stockCount: p.stock_count,
+        sku: p.sku || "",
+        description: p.description || "",
+        highlights: p.highlights || [],
+        details: p.details || { fabric: "", fit: "", care: "", origin: "" },
+        reviews: p.reviews || { rating: 5, count: 0, items: [] },
+      }));
+    }
+  } catch {}
 
   // Schema.org Product structured data
   const jsonLd = {

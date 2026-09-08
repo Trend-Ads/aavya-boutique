@@ -1,33 +1,35 @@
 "use client";
 
+import Link from "next/link";
+
 const MOODS = [
   {
     id: "mood-soft",
     label: "Soft & Feminine",
     subtitle: "Romantic silhouettes",
     image: "/images/mood-1.jpg",
-    href: "#soft-feminine",
+    href: "/shop",
   },
   {
     id: "mood-minimal",
     label: "Minimal & Modern",
     subtitle: "Clean, confident cuts",
     image: "/images/mood-2.jpg",
-    href: "#minimal",
+    href: "/shop",
   },
   {
     id: "mood-festive",
     label: "Festive Energy",
     subtitle: "Statement ethnic pieces",
     image: "/images/mood-3.jpg",
-    href: "#festive",
+    href: "/shop",
   },
   {
     id: "mood-weekend",
     label: "Weekend Edit",
     subtitle: "Easy everyday dressing",
     image: "/images/mood-4.jpg",
-    href: "#weekend",
+    href: "/shop",
   },
 ];
 
@@ -66,7 +68,7 @@ export default function ShopByMood() {
         }}
       >
         {MOODS.map((mood) => (
-          <a
+          <Link
             key={mood.id}
             href={mood.href}
             id={mood.id}
@@ -157,7 +159,7 @@ export default function ShopByMood() {
                 </span>
               </div>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
     </section>

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function FeaturedCollection() {
   return (
     <section
@@ -149,9 +151,9 @@ export default function FeaturedCollection() {
                 newest styles — a wardrobe built around the real moments of your life.
               </p>
               <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-                <a href="#shop" id="explore-aavya-edit" className="btn-primary">
+                <Link href="/shop" id="explore-aavya-edit" className="btn-primary">
                   Explore the Edit →
-                </a>
+                </Link>
                 <a href="#about" id="our-story-link" className="btn-outline">
                   Our Story
                 </a>

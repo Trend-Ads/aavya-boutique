@@ -3,14 +3,57 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useUI } from "@/context/UIContext";
-import { PRODUCTS } from "@/data/products";
+import { ProductItem } from "@/data/products";
+import { createClient } from "@/lib/supabase/client";
 
 const SUGGESTED_SEARCHES = ["Dresses", "Kurtis", "Co-ords", "Party Wear", "New Arrivals", "Ethnic", "Tops"];
 
 export default function SearchOverlay() {
+  const supabase = createClient();
   const { isSearchOpen, closeSearch } = useUI();
   const [query, setQuery] = useState("");
+  const [allProducts, setAllProducts] = useState<ProductItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    async function loadSearchProducts() {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("is_listed", true);
+
+        if (!error && data && data.length > 0) {
+          setAllProducts(
+            data.map((p) => ({
+              id: p.id,
+              slug: p.slug,
+              name: p.name,
+              descriptor: p.descriptor,
+              tagline: p.tagline,
+              price: Number(p.price),
+              originalPrice: p.original_price ? Number(p.original_price) : undefined,
+              image: p.images?.[0] || p.image || "/images/product-1.jpg",
+              images: p.images && p.images.length > 0 ? p.images : [p.image],
+              category: p.category,
+              colors: p.colors || [],
+              sizes: p.sizes || [],
+              badge: p.badge || undefined,
+              isBestseller: p.is_bestseller,
+              inStock: p.in_stock,
+              stockCount: p.stock_count,
+              sku: p.sku || "",
+              description: p.description || "",
+              highlights: p.highlights || [],
+              details: p.details || { fabric: "", fit: "", care: "", origin: "" },
+              reviews: p.reviews || { rating: 5, count: 0, items: [] },
+            }))
+          );
+        }
+      } catch {}
+    }
+    loadSearchProducts();
+  }, [supabase]);
 
   useEffect(() => {
     if (isSearchOpen) {
@@ -182,13 +225,13 @@ export default function SearchOverlay() {
           </p>
           {(() => {
             const filtered = query.trim()
-              ? PRODUCTS.filter(
+              ? allProducts.filter(
                   (p) =>
                     p.name.toLowerCase().includes(query.toLowerCase()) ||
                     p.category.toLowerCase().includes(query.toLowerCase()) ||
                     p.descriptor.toLowerCase().includes(query.toLowerCase())
                 )
-              : PRODUCTS.slice(0, 4);
+              : allProducts.slice(0, 4);
 
             if (filtered.length === 0) {
               return (
