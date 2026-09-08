@@ -80,12 +80,17 @@ export default function ProductDetailView({
     openCart();
   };
 
-  // WhatsApp direct buy URL
+  // Track page URL safely across SSR and Client without hydration mismatch
+  const [pageUrl, setPageUrl] = useState(`https://aavyaboutique.in/product/${product.slug}`);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setPageUrl(window.location.href);
+    }
+  }, [product.slug]);
+
+  // WhatsApp direct buy URL (deterministic between SSR and initial hydration)
   const whatsappBuyUrl = useMemo(() => {
-    const currentUrl =
-      typeof window !== "undefined"
-        ? window.location.href
-        : `https://aavyaboutique.in/product/${product.slug}`;
     const totalAmount = product.price * quantity;
 
     const message =
@@ -95,11 +100,28 @@ export default function ProductDetailView({
       `• *Color:* ${selectedColor}\n` +
       `• *Quantity:* ${quantity}\n` +
       `• *Price:* ₹${totalAmount.toLocaleString("en-IN")}\n` +
-      `• *Product Link:* ${currentUrl}\n\n` +
+      `• *Product Link:* ${pageUrl}\n\n` +
       `Please confirm availability and share payment options for delivery. Thank you!`;
 
     return `https://wa.me/919778524133?text=${encodeURIComponent(message)}`;
-  }, [product, selectedSize, selectedColor, quantity]);
+  }, [product, selectedSize, selectedColor, quantity, pageUrl]);
+
+  // Generates current live URL on click
+  const getDynamicWhatsAppUrl = () => {
+    const currentUrl = typeof window !== "undefined" ? window.location.href : pageUrl;
+    const totalAmount = product.price * quantity;
+    const message =
+      `Hello Aavya Boutique! 🌸\n` +
+      `I would like to order *${product.name}*:\n\n` +
+      `• *Size:* ${selectedSize}\n` +
+      `• *Color:* ${selectedColor}\n` +
+      `• *Quantity:* ${quantity}\n` +
+      `• *Price:* ₹${totalAmount.toLocaleString("en-IN")}\n` +
+      `• *Product Link:* ${currentUrl}\n\n` +
+      `Please confirm availability and share payment options for delivery. Thank you!`;
+    return `https://wa.me/919778524133?text=${encodeURIComponent(message)}`;
+  };
+
 
 
   const discountPercent = product.originalPrice
@@ -889,6 +911,10 @@ export default function ProductDetailView({
                 href={whatsappBuyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                suppressHydrationWarning
+                onClick={(e) => {
+                  e.currentTarget.href = getDynamicWhatsAppUrl();
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -1502,7 +1528,9 @@ export default function ProductDetailView({
           href={whatsappBuyUrl}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => {
+          suppressHydrationWarning
+          onClick={(e) => {
+            e.currentTarget.href = getDynamicWhatsAppUrl();
             addToCart({
               id: `${product.id}-${selectedSize}-${selectedColor}`,
               name: product.name,

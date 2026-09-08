@@ -1,24 +1,25 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useUI } from "@/context/UIContext";
 
 export default function CartDrawer() {
   const { isCartOpen, closeCart, cartItems, removeFromCart, updateQuantity, clearCart } = useUI();
+
+  const [siteOrigin, setSiteOrigin] = useState("https://aavyaboutique.in");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setSiteOrigin(window.location.origin);
+    }
+  }, []);
 
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
-  const whatsappCheckoutUrl = useMemo(() => {
-    if (cartItems.length === 0) return "https://wa.me/919778524133";
-
-    const baseUrl =
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "https://aavyaboutique.in";
-
+  const buildWhatsAppMessage = (origin: string) => {
     let message = `Hello Aavya Boutique! 🌸\nI would like to place an order for the following boutique items:\n\n*🛍️ ORDER DETAILS:*\n`;
 
     cartItems.forEach((item, index) => {
@@ -30,10 +31,10 @@ export default function CartDrawer() {
           .trim()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-+|-+$/g, "");
-      const productUrl = `${baseUrl}/product/${productSlug}`;
+      const productUrl = `${origin}/product/${productSlug}`;
       const imageUrl = item.image.startsWith("http")
         ? item.image
-        : `${baseUrl}${item.image.startsWith("/") ? "" : "/"}${item.image}`;
+        : `${origin}${item.image.startsWith("/") ? "" : "/"}${item.image}`;
 
       message += `------------------------------\n`;
       message += `${index + 1}. *${item.name}*\n`;
@@ -43,8 +44,8 @@ export default function CartDrawer() {
       }
       message += `   • Quantity: ${item.quantity}\n`;
       message += `   • Price: ₹${itemTotal.toLocaleString("en-IN")}\n`;
-      message += `   • 🔗 Product: ${productUrl}\n`;
-      message += `   • 🖼️ Image: ${imageUrl}\n\n`;
+      message += `   • Product Link: ${productUrl}\n`;
+      message += `   • Image: ${imageUrl}\n\n`;
     });
 
     message += `------------------------------\n`;
@@ -53,7 +54,21 @@ export default function CartDrawer() {
     message += `Please confirm my order and share the payment details. Thank you!`;
 
     return `https://wa.me/919778524133?text=${encodeURIComponent(message)}`;
-  }, [cartItems, subtotal]);
+  };
+
+  const whatsappCheckoutUrl = useMemo(() => {
+    if (cartItems.length === 0) return "https://wa.me/919778524133";
+    return buildWhatsAppMessage(siteOrigin);
+  }, [cartItems, subtotal, siteOrigin]);
+
+  const getDynamicWhatsAppCheckoutUrl = () => {
+    if (cartItems.length === 0) return "https://wa.me/919778524133";
+    const origin = typeof window !== "undefined" ? window.location.origin : siteOrigin;
+    return buildWhatsAppMessage(origin);
+  };
+
+
+
 
   // Close on escape key
   useEffect(() => {
@@ -397,6 +412,10 @@ export default function CartDrawer() {
               target="_blank"
               rel="noopener noreferrer"
               id="cart-checkout-cta"
+              suppressHydrationWarning
+              onClick={(e) => {
+                e.currentTarget.href = getDynamicWhatsAppCheckoutUrl();
+              }}
               className="btn-primary"
               style={{
                 display: "flex",
