@@ -41,6 +41,7 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
     "idle" | "checking" | "available" | "taken" | "invalid"
   >("idle");
   const [slugFeedback, setSlugFeedback] = useState<string | null>(null);
+  const [slugSuggestions, setSlugSuggestions] = useState<string[]>([]);
 
   // Helper to format manual typing in slug input (allows and preserves hyphens as user types)
   const formatManualSlug = (text: string) => {
@@ -60,11 +61,54 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
       .replace(/^-+|-+$/g, "");
   };
 
+  // Algorithm to generate intelligent, unique slug suggestions for taken slugs
+  const generateSlugSuggestions = (
+    baseSlug: string,
+    existingSlugs: Set<string>
+  ): string[] => {
+    const cleanBase = baseSlug.replace(/^-+|-+$/g, "");
+    if (!cleanBase) return [];
+
+    const suggestions: string[] = [];
+    const currentYear = new Date().getFullYear();
+
+    // High-value boutique & fashion semantic variants
+    const candidateVariants = [
+      `${cleanBase}-collection`,
+      `${cleanBase}-edit`,
+      `shop-${cleanBase}`,
+      `${cleanBase}-boutique`,
+      `${cleanBase}-curation`,
+      `${cleanBase}-exclusive`,
+      `${cleanBase}-${currentYear}`,
+    ];
+
+    for (const variant of candidateVariants) {
+      if (!existingSlugs.has(variant) && !suggestions.includes(variant)) {
+        suggestions.push(variant);
+      }
+      if (suggestions.length >= 4) break;
+    }
+
+    // Numbered increment fallback if needed (e.g. dresses-2, dresses-3)
+    let counter = 2;
+    while (suggestions.length < 4 && counter <= 20) {
+      const candidate = `${cleanBase}-${counter}`;
+      if (!existingSlugs.has(candidate) && !suggestions.includes(candidate)) {
+        suggestions.push(candidate);
+      }
+      counter++;
+    }
+
+    return suggestions;
+  };
+
   // Real-time debounced slug uniqueness checker
   useEffect(() => {
     if (!isAddModalOpen && !editingCategory) {
       setSlugStatus("idle");
       setSlugFeedback(null);
+      setSlugSuggestions([]);
       return;
     }
 
@@ -74,6 +118,7 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
     if (!cleanSlug) {
       setSlugStatus("invalid");
       setSlugFeedback("Slug cannot be empty.");
+      setSlugSuggestions([]);
       return;
     }
 
@@ -88,8 +133,16 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
     if (editingCategory && cleanSlug === editingCategory.slug.toLowerCase()) {
       setSlugStatus("available");
       setSlugFeedback("Current slug (unchanged).");
+      setSlugSuggestions([]);
       return;
     }
+
+    // Build set of currently known taken slugs
+    const takenSlugsSet = new Set(
+      categories
+        .filter((c) => !editingCategory || c.id !== editingCategory.id)
+        .map((c) => c.slug.toLowerCase())
+    );
 
     // Instant local memory check against existing categories
     const localConflict = categories.find(
@@ -101,6 +154,8 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
     if (localConflict) {
       setSlugStatus("taken");
       setSlugFeedback(`Already in use by category "${localConflict.name}".`);
+      const suggestions = generateSlugSuggestions(cleanSlug, takenSlugsSet);
+      setSlugSuggestions(suggestions);
       return;
     }
 
@@ -127,13 +182,20 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
           setSlugFeedback(
             `Already in use by category "${data[0].name || data[0].slug}".`
           );
+          data.forEach((d: { slug: string }) =>
+            takenSlugsSet.add(d.slug.toLowerCase())
+          );
+          const suggestions = generateSlugSuggestions(cleanSlug, takenSlugsSet);
+          setSlugSuggestions(suggestions);
         } else {
           setSlugStatus("available");
           setSlugFeedback("Slug is available!");
+          setSlugSuggestions([]);
         }
       } catch {
         setSlugStatus("available");
         setSlugFeedback("Slug is available!");
+        setSlugSuggestions([]);
       }
     }, 280);
 
@@ -1265,6 +1327,101 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
                   >
                     <span>{slugFeedback}</span>
                   </p>
+                )}
+
+                {/* Real-time intelligent slug suggestions when taken */}
+                {slugStatus === "taken" && slugSuggestions.length > 0 && (
+                  <div
+                    style={{
+                      marginTop: "0.6rem",
+                      padding: "0.65rem 0.85rem",
+                      backgroundColor: "rgba(197, 160, 89, 0.08)",
+                      border: "1px dashed rgba(197, 160, 89, 0.45)",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "0.74rem",
+                        fontWeight: 600,
+                        color: "var(--color-gold-dark)",
+                        marginBottom: "0.45rem",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.35rem",
+                      }}
+                    >
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M12 2v4" />
+                        <path d="M12 18v4" />
+                        <path d="M4.93 4.93l2.83 2.83" />
+                        <path d="M16.24 16.24l2.83 2.83" />
+                        <path d="M2 12h4" />
+                        <path d="M18 12h4" />
+                        <path d="M4.93 19.07l2.83-2.83" />
+                        <path d="M16.24 7.76l2.83-2.83" />
+                      </svg>
+                      <span>Suggested unique alternatives (click to use):</span>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "0.4rem",
+                      }}
+                    >
+                      {slugSuggestions.map((sug) => (
+                        <button
+                          key={sug}
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, slug: sug }));
+                          }}
+                          style={{
+                            fontSize: "0.75rem",
+                            fontFamily: "monospace",
+                            padding: "0.3rem 0.65rem",
+                            borderRadius: "6px",
+                            border: "1px solid rgba(197, 160, 89, 0.4)",
+                            backgroundColor: "#ffffff",
+                            color: "var(--color-charcoal)",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "0.3rem",
+                            transition: "all 0.15s ease",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                          }}
+                          onMouseOver={(e) => {
+                            (e.currentTarget as HTMLElement).style.backgroundColor =
+                              "var(--color-charcoal)";
+                            (e.currentTarget as HTMLElement).style.color = "#ffffff";
+                            (e.currentTarget as HTMLElement).style.borderColor =
+                              "var(--color-charcoal)";
+                          }}
+                          onMouseOut={(e) => {
+                            (e.currentTarget as HTMLElement).style.backgroundColor =
+                              "#ffffff";
+                            (e.currentTarget as HTMLElement).style.color =
+                              "var(--color-charcoal)";
+                            (e.currentTarget as HTMLElement).style.borderColor =
+                              "rgba(197, 160, 89, 0.4)";
+                          }}
+                          title={`Click to select "${sug}"`}
+                        >
+                          <span style={{ color: "var(--color-gold)", fontWeight: 700 }}>+</span>
+                          <span>{sug}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
 
