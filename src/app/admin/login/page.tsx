@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 export default function AdminLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectedFrom = searchParams.get("redirectedFrom") || "/admin";
+  const redirectedFrom = searchParams.get("redirectedFrom") || "/admin/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

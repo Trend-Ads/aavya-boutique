@@ -61,9 +61,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // If already logged in and visiting login page, redirect to dashboard
+  // If visiting /admin root or already logged in on login page, direct to dashboard
+  if (pathname === "/admin") {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? "/admin/dashboard" : "/admin/login";
+    return NextResponse.redirect(url);
+  }
+
   if (isLoginPage && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/admin";
+    url.pathname = "/admin/dashboard";
     return NextResponse.redirect(url);
   }
 

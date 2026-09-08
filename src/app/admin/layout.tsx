@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import AdminHeader from "@/components/admin/AdminHeader";
+import AdminShell from "@/components/admin/AdminShell";
 
 export const metadata = {
   title: "Admin Portal | Aavya Boutique",
@@ -20,22 +20,10 @@ export default async function AdminLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // If unauthenticated (e.g. on /admin/login), render children without the admin topbar
+  // If unauthenticated (e.g. on /admin/login), render children directly without admin shell
   if (!user) {
     return <>{children}</>;
   }
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f9f8f5",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <AdminHeader userEmail={user.email} />
-      <main style={{ flex: 1 }}>{children}</main>
-    </div>
-  );
+  return <AdminShell userEmail={user.email}>{children}</AdminShell>;
 }
